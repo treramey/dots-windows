@@ -1,0 +1,3 @@
+[submodule "home/dot_config/nvim"]
+	path = home/dot_config/nvim
+	url = https://github.com/treramey/nvim.git

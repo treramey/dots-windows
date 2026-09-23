@@ -46,12 +46,18 @@ machine, sync it back into the repo:
 
 ## Neovim
 
-`home/dot_config/nvim/` is a live workspace, ignored by git and chezmoi.
-`~/AppData/Local/nvim` symlinks to it (created by
-`home/AppData/Local/symlink_nvim.tmpl`), so Neovim edits happen directly in
-the repo directory. The shared config lives in
-[treramey/nvim](https://github.com/treramey/nvim) and will be wired here as a
-git submodule; until then, treat the directory as untracked local state.
+`home/dot_config/nvim` is a git submodule pinned to
+[treramey/nvim](https://github.com/treramey/nvim) main; `~/AppData/Local/nvim`
+symlinks to it (created by `home/AppData/Local/symlink_nvim.tmpl`), so Neovim
+edits happen directly in the repo directory.
+
+The Windows-only adaptations (MinGW CC fix for tree-sitter, Program Files
+dotnet, pwsh terminals, Neovide guifont and transparency guards) live as
+**uncommitted working-tree changes inside the submodule** until they are
+upstreamed to treramey/nvim. Do not commit inside the submodule or reset it
+without coordinating with that repo. `run_before_00-init-nvim-submodule`
+scripts (`.ps1` on Windows, `.sh` on Linux) initialize the submodule on every
+apply, so a fresh clone heals itself.
 
 ## Pi and agent skills
 

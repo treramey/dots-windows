@@ -1,0 +1,7 @@
+{{ if eq .chezmoi.os "linux" -}}
+#!/usr/bin/env bash
+set -euo pipefail
+# Initialize the shared Neovim submodule so the ~/.config/nvim symlink target
+# has content, even on a fresh clone that did not recurse submodules.
+git -C {{ .chezmoi.sourceDir | quote }} submodule update --init --recursive
+{{ end -}}

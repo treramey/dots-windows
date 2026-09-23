@@ -1,5 +1,5 @@
-# Neovim is a live workspace (shared submodule planned); never track it here.
-home/dot_config/nvim/
+# Neovim is a git submodule at home/dot_config/nvim (treramey/nvim). Its
+# working tree carries Windows-only mods that are intentionally uncommitted.
 
 # Editor and runtime artifacts
 */**/.undodir
