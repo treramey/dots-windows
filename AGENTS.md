@@ -52,10 +52,11 @@ symlinks to it (created by `home/AppData/Local/symlink_nvim.tmpl`), so Neovim
 edits happen directly in the repo directory.
 
 The Windows-only adaptations (MinGW CC fix for tree-sitter, Program Files
-dotnet, pwsh terminals, Neovide guifont and transparency guards) live as
-**uncommitted working-tree changes inside the submodule** until they are
-upstreamed to treramey/nvim. Do not commit inside the submodule or reset it
-without coordinating with that repo. `run_before_00-init-nvim-submodule`
+dotnet, pwsh terminals, Neovide guifont and transparency guards, and the
+removal of the `mini.statuscolumn` setup that current mini.nvim dropped)
+live as **uncommitted working-tree changes inside the submodule** until they
+are upstreamed to treramey/nvim. Do not commit inside the submodule or reset
+it without coordinating with that repo. `run_before_00-init-nvim-submodule`
 scripts (`.ps1` on Windows, `.sh` on Linux) initialize the submodule on every
 apply, so a fresh clone heals itself.
 
