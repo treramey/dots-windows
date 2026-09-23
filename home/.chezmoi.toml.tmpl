@@ -1,0 +1,16 @@
+{{- $is_arch := false -}}
+{{- $is_omarchy := false -}}
+{{- if eq .chezmoi.os "linux" -}}
+{{-   if stat "/etc/arch-release" -}}
+{{-     $is_arch = true -}}
+{{-   end -}}
+{{-   if stat (joinPath .chezmoi.homeDir ".local/share/omarchy") -}}
+{{-     $is_omarchy = true -}}
+{{-   end -}}
+{{- end -}}
+
+sourceDir = {{ .chezmoi.sourceDir | quote }}
+
+[data]
+  is_arch = {{ $is_arch }}
+  is_omarchy = {{ $is_omarchy }}

@@ -1,0 +1,91 @@
+gui:
+  showNumstatInFilesView: true
+  skipRewordInEditorWarning: true
+  tabWidth: 2
+  border: single
+  spinner:
+    frames:
+      - "⠋"
+      - "⠙"
+      - "⠹"
+      - "⠸"
+      - "⠼"
+      - "⠴"
+      - "⠦"
+      - "⠧"
+      - "⠇"
+      - "⠏"
+    rate: 80
+{{- if eq (includeTemplate "theme-mode" .) "dynamic" }}
+  theme:
+    # Omarchy/system: ANSI names only, so Ghostty's active palette controls the colors.
+    activeBorderColor:
+      - yellow
+      - bold
+    inactiveBorderColor:
+      - default
+    searchingActiveBorderColor:
+      - cyan
+      - bold
+    optionsTextColor:
+      - blue
+    selectedLineBgColor:
+      - blue
+    inactiveViewSelectedLineBgColor:
+      - default
+      - bold
+    cherryPickedCommitFgColor:
+      - yellow
+    cherryPickedCommitBgColor:
+      - default
+    markedBaseCommitFgColor:
+      - yellow
+    markedBaseCommitBgColor:
+      - default
+    unstagedChangesColor:
+      - red
+    defaultFgColor:
+      - default
+  authorColors:
+    "*": cyan
+{{- else }}
+  theme:
+    # Same roles as the dynamic branch, pinned to the Rose Pine palette.
+    activeBorderColor:
+      - "{{ .rose_pine.gold }}"
+      - bold
+    inactiveBorderColor:
+      - "{{ .rose_pine.muted }}"
+    searchingActiveBorderColor:
+      - "{{ .rose_pine.rose }}"
+      - bold
+    optionsTextColor:
+      - "{{ .rose_pine.foam }}"
+    selectedLineBgColor:
+      - "{{ .rose_pine.highlight_med }}"
+    inactiveViewSelectedLineBgColor:
+      - bold
+    cherryPickedCommitFgColor:
+      - "{{ .rose_pine.gold }}"
+    cherryPickedCommitBgColor:
+      - "{{ .rose_pine.highlight_med }}"
+    markedBaseCommitFgColor:
+      - "{{ .rose_pine.gold }}"
+    markedBaseCommitBgColor:
+      - "{{ .rose_pine.highlight_med }}"
+    unstagedChangesColor:
+      - "{{ .rose_pine.love }}"
+    defaultFgColor:
+      - "{{ .rose_pine.text }}"
+  authorColors:
+    "*": "{{ .rose_pine.iris }}"
+{{- end }}
+  nerdFontsVersion: "3"
+  switchTabsWithPanelJumpKeys: true
+os:
+  editPreset: nvim
+git:
+  overrideGpg: true
+  pagers:
+    - colorArg: always
+      pager: delta --paging=never

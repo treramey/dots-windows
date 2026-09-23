@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Print tmux-only sesh entries for Television with a single highlight style.
+sesh list -t --icons \
+  | sed -r 's/\x1B\[[0-9;]*[mK]//g' \
+  | awk '{ printf "\033[1;35m%s\033[0m\n", $0 }'

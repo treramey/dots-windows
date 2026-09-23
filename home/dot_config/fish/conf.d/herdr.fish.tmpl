@@ -1,0 +1,8 @@
+{{- if .is_arch -}}
+# Multiplexer auto-start disabled on omarchy (managed by omarchy's own tmux config)
+{{- else -}}
+# Auto-start herdr in Ghostty
+if command -q herdr; and status is-interactive; and not set -q HERDR_ENV; and not set -q TMUX; and test "$TERM_PROGRAM" = ghostty
+    exec herdr
+end
+{{- end -}}

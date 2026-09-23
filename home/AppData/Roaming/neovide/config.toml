@@ -1,0 +1,8 @@
+# Managed by chezmoi.
+# Use the native Windows Neovim installation.
+
+wsl = false
+
+[font]
+normal = "MonoLisaVariable Nerd Font"
+size = 11

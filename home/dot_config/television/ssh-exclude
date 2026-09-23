@@ -1,0 +1,5 @@
+# SSH config Host aliases to hide from the tv ssh launcher.
+# Keep Git/service-only SSH hosts here so they remain usable by git,
+# but do not show up as interactive login targets.
+ssh.dev.azure.com
+github.com

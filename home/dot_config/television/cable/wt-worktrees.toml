@@ -1,0 +1,36 @@
+[metadata]
+name = "wt-worktrees"
+description = "Browse existing Worktrunk worktrees"
+requirements = ["git", "wt"]
+
+[ui]
+orientation = "portrait"
+
+[source]
+command = "$HOME/.local/scripts/tv-wt --worktrees"
+display = "{split:\t:2}"
+no_sort = true
+frecency = false
+
+[preview]
+command = "$HOME/.local/scripts/tv-wt --preview '{split:\t:0}' '{split:\t:1}'"
+
+[keybindings]
+enter = "actions:shell"
+ctrl-o = "actions:switch"
+ctrl-d = "actions:remove"
+
+[actions.shell]
+description = "Open the selected worktree"
+command = "$HOME/.local/scripts/tv-wt --shell '{split:\t:0}'"
+mode = "execute"
+
+[actions.switch]
+description = "Switch with Worktrunk"
+command = "$HOME/.local/scripts/tv-wt --switch '{split:\t:1}'"
+mode = "execute"
+
+[actions.remove]
+description = "Remove with Worktrunk"
+command = "$HOME/.local/scripts/tv-wt --remove '{split:\t:1}'"
+mode = "execute"

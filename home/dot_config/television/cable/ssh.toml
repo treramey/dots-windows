@@ -1,0 +1,22 @@
+[metadata]
+name = "ssh"
+description = "Pick an SSH host and open its remote Omaterm in a standalone terminal"
+requirements = ["ssh", "xdg-terminal-exec"]
+
+[ui]
+orientation = "portrait"
+
+[ui.preview_panel]
+hidden = true
+
+[source]
+command = "~/.local/scripts/tv-ssh-hosts"
+no_sort = true
+
+[keybindings]
+enter = "actions:connect"
+
+[actions.connect]
+description = "Open remote Omaterm in a new terminal window"
+command = "~/.local/scripts/tv-ssh-connect --launch '{}'"
+mode = "execute"

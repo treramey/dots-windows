@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+
+    <!-- Optional: enable AOT publishing. -->
+    <!-- <PublishAot>true</PublishAot> -->
+    <!-- <InvariantGlobalization>true</InvariantGlobalization> -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- TUnit meta-package (versions pinned in Directory.Packages.props). -->
+    <PackageReference Include="TUnit" />
+
+    <!-- Bundled into TUnit 1.x meta-package; listed here for explicit pinning. -->
+    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
+    <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" />
+
+    <!-- Optional: time-testing extension. -->
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
+  </ItemGroup>
+
+  <!-- Do NOT add Microsoft.NET.Test.Sdk. TUnit uses Microsoft.Testing.Platform,
+       not VSTest. -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\MyApp.Core\MyApp.Core.csproj" />
+  </ItemGroup>
+
+</Project>

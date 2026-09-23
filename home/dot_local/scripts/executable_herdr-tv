@@ -1,0 +1,187 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat >&2 <<'EOF'
+Usage: herdr-tv
+       herdr-tv --source
+       herdr-tv --select <workspace|directory> <base64-value>
+       herdr-tv --select-display <display-value>
+EOF
+}
+
+require_herdr() {
+  if [[ "${HERDR_ENV:-}" != "1" ]]; then
+    printf 'herdr-tv must run inside Herdr\n' >&2
+    exit 1
+  fi
+}
+
+encode_entries() {
+  python3 -c '
+import base64
+import json
+import os
+import sys
+
+kind = sys.argv[1]
+
+def encoded(value):
+    return base64.urlsafe_b64encode(value.encode()).decode()
+
+def clean(value):
+    return str(value).replace("\t", " ").replace("\r", " ").replace("\n", " ").replace(chr(39), "’")
+
+if kind == "workspace":
+    data = json.load(sys.stdin)
+    for workspace in data.get("result", {}).get("workspaces", []):
+        workspace_id = str(workspace["workspace_id"])
+        number = workspace.get("number", "")
+        label = clean(workspace.get("label") or "Workspace {}".format(number))
+        tabs = workspace.get("tab_count", 0)
+        panes = workspace.get("pane_count", 0)
+        detail = f"{tabs} tab" + ("" if tabs == 1 else "s")
+        detail += f", {panes} pane" + ("" if panes == 1 else "s")
+        kind = "workspace-focused" if workspace.get("focused") else "workspace"
+        print(f"{kind}\t{encoded(workspace_id)}\t  {label}  ·  {detail}")
+elif kind == "directory":
+    seen = set()
+    for line in sys.stdin:
+        path = line.rstrip("\r\n")
+        if not path or path in seen or not os.path.isdir(path):
+            continue
+        seen.add(path)
+        display = clean(path).replace(os.path.expanduser("~"), "~", 1)
+        print(f"directory\t{encoded(path)}\t  {display}")
+else:
+    raise SystemExit(f"unknown entry kind: {kind}")
+' "$1"
+}
+
+emit_source() {
+  # Keep live workspaces first, followed by zoxide's frecency ordering.
+  local cache_dir="${XDG_RUNTIME_DIR:-/tmp}"
+  local cache="$cache_dir/herdr-tv-${UID}.cache"
+  local entries cache_tmp
+  entries="$(mktemp "$cache_dir/herdr-tv-entries.XXXXXX")"
+  cache_tmp="$(mktemp "$cache_dir/herdr-tv-cache.XXXXXX")"
+  trap 'rm -f "$entries" "$cache_tmp"' RETURN
+
+  {
+    herdr workspace list | encode_entries workspace
+    zoxide query -l | encode_entries directory
+  } >"$entries"
+
+  python3 - "$cache_tmp" "$entries" <<'PY'
+import base64
+import sys
+
+cache_path, entries_path = sys.argv[1:]
+with open(cache_path, "w", encoding="utf-8") as cache:
+  with open(entries_path, encoding="utf-8") as entries:
+    for raw_line in entries:
+        kind, value, display = raw_line.rstrip("\n").split("\t", 2)
+        cache_key = base64.urlsafe_b64encode(display.encode()).decode()
+        normalized_kind = "workspace" if kind.startswith("workspace") else kind
+        cache.write(f"{cache_key}\t{normalized_kind}\t{value}\n")
+        if kind.startswith("workspace"):
+            display = f"\033[1;35m\033[22;39m{display[1:]}"
+        print(display)
+PY
+  mv -f "$cache_tmp" "$cache"
+}
+
+open_display_selection() {
+  local display="$1"
+  local cache="${XDG_RUNTIME_DIR:-/tmp}/herdr-tv-${UID}.cache"
+  local resolved
+
+  resolved="$(python3 - "$cache" "$display" <<'PY'
+import base64
+import sys
+
+cache_path, display = sys.argv[1:]
+key = base64.urlsafe_b64encode(display.encode()).decode()
+try:
+    with open(cache_path, encoding="utf-8") as cache:
+        for line in cache:
+            cached_key, kind, value = line.rstrip("\n").split("\t", 2)
+            if cached_key == key:
+                print(f"{kind}\t{value}")
+                raise SystemExit
+except FileNotFoundError:
+    pass
+raise SystemExit("herdr-tv selection cache is stale; reopen the picker")
+PY
+)"
+  open_selection "${resolved%%$'\t'*}" "${resolved#*$'\t'}"
+}
+
+decode_value() {
+  python3 -c '
+import base64
+import sys
+
+try:
+    print(base64.urlsafe_b64decode(sys.argv[1]).decode(), end="")
+except Exception as error:
+    raise SystemExit(f"invalid herdr-tv selection: {error}")
+' "$1"
+}
+
+open_selection() {
+  local kind="$1"
+  local value
+  value="$(decode_value "$2")"
+
+  case "$kind" in
+    workspace)
+      herdr workspace focus "$value" >/dev/null
+      ;;
+    directory)
+      if [[ ! -d "$value" ]]; then
+        printf 'Directory no longer exists: %s\n' "$value" >&2
+        exit 1
+      fi
+      herdr workspace create --cwd "$value" --focus >/dev/null
+      ;;
+    *)
+      printf 'Unknown herdr-tv selection type: %s\n' "$kind" >&2
+      exit 2
+      ;;
+  esac
+}
+
+case "${1:-}" in
+  "")
+    require_herdr
+    exec tv herdr-workspaces
+    ;;
+  --source)
+    require_herdr
+    emit_source
+    ;;
+  --select)
+    require_herdr
+    if [[ $# -ne 3 ]]; then
+      usage
+      exit 2
+    fi
+    open_selection "$2" "$3"
+    ;;
+  --select-display)
+    require_herdr
+    if [[ $# -ne 2 ]]; then
+      usage
+      exit 2
+    fi
+    open_display_selection "$2"
+    ;;
+  -h|--help)
+    usage
+    ;;
+  *)
+    usage
+    exit 2
+    ;;
+esac

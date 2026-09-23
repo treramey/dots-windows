@@ -1,0 +1,24 @@
+[metadata]
+name = "wt-projects"
+description = "Choose a recent Git repository, then one of its worktrees"
+requirements = ["git", "zoxide"]
+
+[ui]
+orientation = "portrait"
+
+[ui.preview_panel]
+hidden = true
+
+[source]
+command = "$HOME/.local/scripts/tv-wt --projects"
+display = "{split:\t:1}"
+no_sort = true
+frecency = false
+
+[keybindings]
+enter = "actions:worktrees"
+
+[actions.worktrees]
+description = "Browse repository worktrees"
+command = "$HOME/.local/scripts/tv-wt --browse '{split:\t:0}'"
+mode = "execute"

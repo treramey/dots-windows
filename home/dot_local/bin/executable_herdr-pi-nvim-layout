@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+# Create a coding layout from the pane focused when the keybinding ran:
+# Pi on the left and Neovim on the right. Let Herdr use its normal split size.
+set -euo pipefail
+
+herdr_bin="${HERDR_BIN_PATH:-herdr}"
+active_pane_id="${HERDR_ACTIVE_PANE_ID:?Herdr did not provide the active pane ID}"
+active_pane_cwd="${HERDR_ACTIVE_PANE_CWD:-$PWD}"
+
+split_result="$($herdr_bin pane split --pane "$active_pane_id" --direction right --cwd "$active_pane_cwd" --no-focus)"
+nvim_pane_id="$(jq --raw-output '.result.pane.pane_id' <<<"$split_result")"
+
+if [[ -z "$nvim_pane_id" || "$nvim_pane_id" == "null" ]]; then
+  printf 'Herdr did not return the new Neovim pane ID.\n' >&2
+  exit 1
+fi
+
+$herdr_bin pane run "$active_pane_id" pi
+$herdr_bin pane run "$nvim_pane_id" nvim

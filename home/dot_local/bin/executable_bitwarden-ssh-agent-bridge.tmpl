@@ -1,0 +1,3 @@
+{{ if eq (includeTemplate "is-wsl" .) "true" -}}
+{{ includeTemplate "bitwarden-ssh-agent-bridge" . }}
+{{ end -}}

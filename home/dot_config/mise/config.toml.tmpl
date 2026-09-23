@@ -1,0 +1,17 @@
+[settings]
+idiomatic_version_file_enable_tools = ["node"]
+
+[settings.ruby]
+
+[settings.dotnet]
+isolated = true
+
+[tools]
+{{ range .packages.mise.common -}}
+{{ .name | quote }} = {{ .version | quote }}
+{{ end -}}
+{{ if eq (includeTemplate "is-wsl" .) "true" -}}
+{{ range .packages.mise.wsl -}}
+{{ .name | quote }} = {{ .version | quote }}
+{{ end -}}
+{{ end -}}

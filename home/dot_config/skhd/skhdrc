@@ -1,0 +1,52 @@
+#!/bin/bash
+
+# focus workspace
+lalt - 1 : /opt/homebrew/bin/aerospace workspace 1
+lalt - 2 : /opt/homebrew/bin/aerospace workspace 2
+lalt - 3 : /opt/homebrew/bin/aerospace workspace 3
+lalt - 4 : /opt/homebrew/bin/aerospace workspace 4
+lalt - 5 : /opt/homebrew/bin/aerospace workspace 5
+
+# cycle workspace
+lalt - tab : /opt/homebrew/bin/aerospace workspace-back-and-forth
+
+# move workspace to monitor
+lalt + ctrl - 1 : /opt/homebrew/bin/aerospace move-workspace-to-monitor 1
+lalt + ctrl - 2 : /opt/homebrew/bin/aerospace move-workspace-to-monitor 2
+lalt + ctrl - 3 : /opt/homebrew/bin/aerospace move-workspace-to-monitor 3
+
+# move window to workspace
+lalt + shift - 1 : /opt/homebrew/bin/aerospace move-node-to-workspace 1
+lalt + shift - 2 : /opt/homebrew/bin/aerospace move-node-to-workspace 2
+lalt + shift - 3 : /opt/homebrew/bin/aerospace move-node-to-workspace 3
+lalt + shift - 4 : /opt/homebrew/bin/aerospace move-node-to-workspace 4
+lalt + shift - 5 : /opt/homebrew/bin/aerospace move-node-to-workspace 5
+
+# focus window
+lalt - h : /opt/homebrew/bin/aerospace focus left
+lalt - j : /opt/homebrew/bin/aerospace focus down
+lalt - k : /opt/homebrew/bin/aerospace focus up
+lalt - l : /opt/homebrew/bin/aerospace focus right
+
+# move window
+lalt + shift - h : /opt/homebrew/bin/aerospace move left
+lalt + shift - j : /opt/homebrew/bin/aerospace move down
+lalt + shift - k : /opt/homebrew/bin/aerospace move up
+lalt + shift - l : /opt/homebrew/bin/aerospace move right
+
+# resize window
+lalt + ctrl - n : /opt/homebrew/bin/aerospace resize smart -50
+lalt + ctrl - p : /opt/homebrew/bin/aerospace resize smart +50
+
+# resize postman to 1/3 width
+lalt + shift - p : /opt/homebrew/bin/aerospace resize smart -625
+
+# toggle floating
+lalt + shift - space : /opt/homebrew/bin/aerospace layout floating tiling
+
+# change binding mode
+lalt - e : /opt/homebrew/bin/aerospace join-with right
+lalt - v : /opt/homebrew/bin/aerospace join-with up
+
+# # reload aerospace config
+lalt + shift - r : /opt/homebrew/bin/aerospace reload-config

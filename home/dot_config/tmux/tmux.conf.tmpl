@@ -1,0 +1,239 @@
+{{- if .is_arch -}}
+{{- $popup_border_style := printf "fg=%s" .rose_pine.iris -}}
+{{- if eq (includeTemplate "theme-mode" .) "dynamic" -}}
+{{-   $popup_border_style = "fg=blue" -}}
+{{- end -}}
+# Let tmux import the current shell's SSH agent variables for new clients.
+# The live tmux server environment is also refreshed from fish conf.d/env.fish.
+set -g update-environment "DISPLAY SSH_AUTH_SOCK SSH_AGENT_PID SSH_CONNECTION WINDOWID XAUTHORITY PI_TMUX_IMAGE_PROTOCOL"
+
+set -g extended-keys on
+set -g extended-keys-format csi-u
+
+# Prefix
+set -g prefix C-Space
+set -g prefix2 C-b
+bind C-Space send-prefix
+
+# Zoom/unzoom the current pane.
+unbind m
+bind m resize-pane -Z
+
+# Reload config
+bind r source-file $HOME/.config/tmux/tmux.conf\; display-message "reloaded tmux.conf"
+
+# Vi mode for copy
+setw -g mode-keys vi
+bind -T copy-mode-vi v send -X begin-selection
+bind -T copy-mode-vi y send -X copy-selection-and-cancel
+
+# Pane Controls
+# Splits reuse the current ssh command when the active pane is an SSH session.
+bind h run-shell "$HOME/.local/bin/tmux-native-split -v '#{pane_id}'"
+bind v run-shell "$HOME/.local/bin/tmux-native-split -h '#{pane_id}'"
+bind x kill-pane
+
+bind -n C-M-Left select-pane -L
+bind -n C-M-Right select-pane -R
+bind -n C-M-Up select-pane -U
+bind -n C-M-Down select-pane -D
+
+bind -n C-M-S-Left resize-pane -L 5
+bind -n C-M-S-Down resize-pane -D 5
+bind -n C-M-S-Up resize-pane -U 5
+bind -n C-M-S-Right resize-pane -R 5
+
+# Window navigation
+# bind r command-prompt -I "#W" "rename-window -- '%%'"
+# New window: if current pane is ssh, open another ssh connection to the same host.
+bind c run-shell "$HOME/.local/bin/tmux-new-native-window '#{pane_id}'"
+bind k kill-window
+
+
+#sesh
+
+# Use television for TMUX sessions
+bind-key -n C-f new-window -c '#{pane_current_path}' -n 'Sesh' tv tmux-sesh
+# bind-key -n C-f display-popup -E -w 45% -h 45% -d '#{pane_current_path}' -T 'Sesh' tv tmux-sesh
+bind-key -n C-w new-window -c '#{pane_current_path}' -n 'Search' tv wt-search
+bind-key -n C-g new-window -c '#{pane_current_path}' -n 'SSH' tv ssh
+bind g popup -EE -w 90% -h 90% -d "#{pane_current_path}" -b rounded -S '{{ $popup_border_style }}' "env SSH_AUTH_SOCK=$HOME/.bitwarden-ssh-agent.sock lazygit"
+bind -N "lazygit" L popup -EE -w 90% -h 90% -d "#{pane_current_path}" -b rounded -S '{{ $popup_border_style }}' "env SSH_AUTH_SOCK=$HOME/.bitwarden-ssh-agent.sock lazygit"
+bind G popup -EE -w 90% -h 90% -d "#{pane_current_path}" -b rounded -S '{{ $popup_border_style }}' "env SSH_AUTH_SOCK=$HOME/.bitwarden-ssh-agent.sock gh dash"
+bind p split-window -h -l 25% -c "#{pane_current_path}" pi
+
+# Pane navigation: vim → send keys, multiple panes → navigate, single pane → pass through
+is_vim="ps -o state= -o comm= -t '#{pane_tty}' | grep -iqE '^[^TXZ ]+ +(\\S+\\/)?g?(view|l?n?vim?x?)(diff)?$'"
+bind -n C-h if-shell "$is_vim" 'send-keys C-h' 'if-shell "[ #{window_panes} -gt 1 ]" "select-pane -L" "send-keys C-h"'
+bind -n C-j if-shell "$is_vim" 'send-keys C-j' 'if-shell "[ #{window_panes} -gt 1 ]" "select-pane -D" "send-keys C-j"'
+bind -n C-k if-shell "$is_vim" 'send-keys C-k' 'if-shell "[ #{window_panes} -gt 1 ]" "select-pane -U" "send-keys C-k"'
+bind -n C-l if-shell "$is_vim" 'send-keys C-l' 'if-shell "[ #{window_panes} -gt 1 ]" "select-pane -R" "send-keys C-l"'
+
+bind -n M-1 select-window -t 1
+bind -n M-2 select-window -t 2
+bind -n M-3 select-window -t 3
+bind -n M-4 select-window -t 4
+bind -n M-5 select-window -t 5
+bind -n M-6 select-window -t 6
+bind -n M-7 select-window -t 7
+bind -n M-8 select-window -t 8
+bind -n M-9 select-window -t 9
+
+bind -n M-Left select-window -t -1
+bind -n M-Right select-window -t +1
+bind -n M-S-Left swap-window -t -1 \; select-window -t -1
+bind -n M-S-Right swap-window -t +1 \; select-window -t +1
+
+# Session controls
+bind R command-prompt -I "#S" "rename-session -- '%%'"
+bind C new-session -c "#{pane_current_path}"
+bind K kill-session
+bind l switch-client -l
+bind P switch-client -p
+bind N switch-client -n
+
+bind -n M-Up switch-client -p
+bind -n M-Down switch-client -n
+
+# General
+set -g default-terminal "tmux-256color"
+set -ag terminal-overrides ",*:RGB"
+set -as terminal-features ",xterm-256color:clipboard,tmux-256color:clipboard"
+set -g mouse on
+set -g base-index 1
+setw -g pane-base-index 1
+set -g renumber-windows on
+set -g history-limit 50000
+set -g escape-time 0
+set -g focus-events on
+set -g set-clipboard on
+set -g allow-passthrough on
+setw -g aggressive-resize on
+set -g detach-on-destroy off
+
+# Status bar
+set -g status-position top
+set -g status-interval 5
+set -g status-left-length 30
+set -g status-right-length 50
+set -g window-status-separator ""
+set -gw automatic-rename on
+set -gw automatic-rename-format '#{b:pane_current_path}'
+
+# Theme
+# Keep this on terminal/ANSI colors so Omarchy theme switching can recolor tmux.
+# Avoid colored backgrounds with dark text; that breaks contrast on light palettes.
+# Copy/scroll mode uses reverse video: visible highlight, still theme-aware.
+set -g status-style "bg=default,fg=default"
+set -g status-left "#[fg=blue,bg=default,bold] #S #[fg=default,bg=default] "
+set -g status-right "#[fg=red]#{?client_prefix,PREFIX ,}#{?window_zoomed_flag,ZOOM ,}#[fg=brightblack]#h "
+set -g window-status-format "#[fg=brightblack] #I:#W "
+set -g window-status-current-format "#[fg=blue,bold] #I:#W "
+set -g pane-border-style "fg=brightblack"
+set -g pane-active-border-style "fg=blue"
+set -g message-style "bg=default,fg=blue"
+set -g message-command-style "bg=default,fg=blue"
+set -g mode-style "fg=default,bg=default,reverse,bold"
+setw -g clock-mode-colour blue
+
+set -g @plugin "tmux-plugins/tmux-sensible"
+
+
+# Auto-install TPM if missing
+if "test ! -d ~/.tmux/plugins/tpm" \
+   "run 'git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm && ~/.tmux/plugins/tpm/tpm'"
+run -b '~/.tmux/plugins/tpm/tpm'
+
+# End of omarchy config
+{{- else -}}
+
+# vim: set ft=tmux
+set -g default-terminal 'tmux-256color'
+set -as terminal-overrides ',*256col*:RGB'
+set -as terminal-overrides ',*:Smulx=\E[4::%p1%dm' # undercurl support
+set -as terminal-overrides ',*:Setulc=\E[58::2::%p1%{65536}%/%d::%p1%{256}%/%{255}%&%d::%p1%{255}%&%d%;m' # underscore colors - needs tmux-3.0
+
+# Enable extended keys (CSI u encoding) for proper modifier key support
+# Allows Shift+Enter, Ctrl+Shift+<key>, etc. to work correctly in apps
+set -s extended-keys on
+set -g extended-keys-format csi-u
+set -as terminal-features 'xterm*:extkeys'
+
+set -s escape-time 0
+set -g update-environment "DISPLAY SSH_AUTH_SOCK SSH_AGENT_PID SSH_CONNECTION WINDOWID XAUTHORITY PI_TMUX_IMAGE_PROTOCOL"
+
+set -g prefix C-Space
+set -g prefix2 C-b
+bind C-Space send-prefix
+
+unbind m
+bind m resize-pane -Z
+
+set -g base-index 1
+set -g pane-base-index 1
+set -g detach-on-destroy off
+set -g focus-events on
+set -g mouse on
+set -g renumber-windows on
+set -g status-position top
+
+unbind r
+bind r source-file $HOME/.config/tmux/tmux.conf\; display-message "reloaded tmux.conf"
+bind x kill-pane # skip "kill-pane 1? (y/n)" prompt
+bind X kill-session
+
+#sesh
+
+bind-key -n C-f new-window -c '#{pane_current_path}' -n 'Sesh' tv tmux-sesh
+bind-key -n C-w new-window -c '#{pane_current_path}' -n 'Search' tv wt-search
+bind-key -n C-g new-window -c '#{pane_current_path}' -n 'SSH' tv ssh
+
+# vim-like pane switching
+bind -r ^ last-window
+bind -r k select-pane -U
+bind -r j select-pane -D
+bind -r h select-pane -L
+
+# Session controls
+bind l switch-client -l
+
+# Splits reuse the current ssh command when the active pane is an SSH session.
+bind h run-shell "$HOME/.local/bin/tmux-native-split -v '#{pane_id}'"
+bind v run-shell "$HOME/.local/bin/tmux-native-split -h '#{pane_id}'"
+# New window: if current pane is ssh, open another ssh connection to the same host.
+bind c run-shell "$HOME/.local/bin/tmux-new-native-window '#{pane_id}'"
+
+# tools
+bind g popup -EE -w 90% -h 90% -d "#{pane_current_path}" -b rounded -S 'fg=#c4a7e7' "env SSH_AUTH_SOCK=$HOME/.bitwarden-ssh-agent.sock lazygit"
+bind -N "lazygit" L popup -EE -w 90% -h 90% -d "#{pane_current_path}" -b rounded -S 'fg=#c4a7e7' "env SSH_AUTH_SOCK=$HOME/.bitwarden-ssh-agent.sock lazygit"
+bind G popup -EE -w 90% -h 90% -d "#{pane_current_path}" -b rounded -S 'fg=#c4a7e7' "env SSH_AUTH_SOCK=$HOME/.bitwarden-ssh-agent.sock gh dash"
+# Work config AI agents
+bind -N "work config: Claude agent" p split-window -h -l 25% -c "#{pane_current_path}" claude
+bind -N "work config: Pi agent" P split-window -h -l 25% -c "#{pane_current_path}" pi
+bind u new-window -c "~/workspace/work/Sv.Packages/master/" \
+  "zsh -c 'source ~/.zshrc; pwsh -File ./GenerateInternalPackageVersions.ps1; echo; echo \"Press Enter to close\"; read -r answer'"
+
+set -g @plugin "tmux-plugins/tpm"
+set -g @plugin "tmux-plugins/tmux-sensible"
+
+# Pane navigation: vim → send keys, multiple panes → navigate, single pane → pass through
+is_vim="ps -o state= -o comm= -t '#{pane_tty}' | grep -iqE '^[^TXZ ]+ +(\\S+\\/)?g?(view|l?n?vim?x?)(diff)?$'"
+bind -n C-h if-shell "$is_vim" 'send-keys C-h' 'if-shell "[ #{window_panes} -gt 1 ]" "select-pane -L" "send-keys C-h"'
+bind -n C-j if-shell "$is_vim" 'send-keys C-j' 'if-shell "[ #{window_panes} -gt 1 ]" "select-pane -D" "send-keys C-j"'
+bind -n C-k if-shell "$is_vim" 'send-keys C-k' 'if-shell "[ #{window_panes} -gt 1 ]" "select-pane -U" "send-keys C-k"'
+bind -n C-l if-shell "$is_vim" 'send-keys C-l' 'if-shell "[ #{window_panes} -gt 1 ]" "select-pane -R" "send-keys C-l"'
+
+set -g @plugin "adriankarlen/tokyo-night-tmux"
+set -g @tokyo-night-tmux_theme "rose-pine"
+set -g @tokyo-night-tmux_show_datetime 0
+set -g @tokyo-night-tmux_show_path 1
+set -g @tokyo-night-tmux_path_format relative
+set -g @tokyo-night-tmux_window_id_style dsquare
+set -g @tokyo-night-tmux_show_git 0
+
+# Auto-install TPM if missing
+if "test ! -d ~/.tmux/plugins/tpm" \
+   "run 'git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm && ~/.tmux/plugins/tpm/tpm'"
+run -b '~/.tmux/plugins/tpm/tpm'
+
+{{- end -}}

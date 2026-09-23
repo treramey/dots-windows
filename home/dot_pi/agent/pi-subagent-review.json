@@ -1,0 +1,9 @@
+{
+  "model": "github-copilot/gpt-5.6-sol",
+  "thinking": "medium",
+  "summary": {
+    "enabled": true,
+    "model": "github-copilot/gpt-5.6-luna",
+    "thinking": "low"
+  }
+}

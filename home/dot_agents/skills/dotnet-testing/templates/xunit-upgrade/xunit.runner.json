@@ -1,0 +1,20 @@
+{
+  "$schema": "https://xunit.net/schema/v3/xunit.runner.schema.json",
+
+  "parallelAlgorithm": "conservative",
+  "maxParallelThreads": 0,
+
+  "diagnosticMessages": false,
+  "internalDiagnosticMessages": false,
+
+  "methodDisplay": "classAndMethod",
+  "methodDisplayOptions": "none",
+
+  "preEnumerateTheories": true,
+
+  "stopOnFail": false,
+  "failSkips": false,
+  "failWarns": false,
+
+  "culture": "invariant"
+}

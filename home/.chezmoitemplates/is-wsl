@@ -1,0 +1,9 @@
+{{- /* Detect WSL at apply time without reading Linux-only kernel fields on
+     Windows or macOS. Keep all WSL-specific templates on this one seam. */ -}}
+{{- $is_wsl := false -}}
+{{- if eq .chezmoi.os "linux" -}}
+{{-   if and .chezmoi.kernel (hasKey .chezmoi.kernel "osrelease") -}}
+{{-     $is_wsl = contains "microsoft" (lower .chezmoi.kernel.osrelease) -}}
+{{-   end -}}
+{{- end -}}
+{{- if $is_wsl -}}true{{- else -}}false{{- end -}}

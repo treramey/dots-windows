@@ -1,0 +1,23 @@
+{{ if eq (includeTemplate "is-wsl" .) "true" -}}
+#!/usr/bin/env sh
+
+set -eu
+
+if [ "$#" -eq 0 ]; then
+    printf 'Usage: wslview <url-or-path>\n' >&2
+    exit 2
+fi
+
+target=$1
+case "$target" in
+    /*)
+        target=$(wslpath -w -- "$target")
+        ;;
+esac
+
+# The single-quoted command is PowerShell code; $target must expand there.
+# shellcheck disable=SC2016
+printf %s "$target" |
+    powershell.exe -NoProfile -NonInteractive -Command \
+        '$target = [Console]::In.ReadToEnd(); Start-Process -FilePath $target'
+{{ end -}}

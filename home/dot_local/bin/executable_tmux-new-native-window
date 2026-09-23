@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Create a new tmux window that follows the current context:
+# - if the current pane is an SSH client, open a fresh SSH connection with
+#   the same command, so SSH sessions feel like native tmux sessions.
+# - otherwise, behave like normal tmux new-window in the current directory.
+
+target_pane="${1:-${TMUX_PANE:-}}"
+
+if [[ -z "$target_pane" ]]; then
+  exec tmux new-window
+fi
+
+current_command="$(tmux display-message -p -t "$target_pane" '#{pane_current_command}')"
+current_path="$(tmux display-message -p -t "$target_pane" '#{pane_current_path}')"
+pane_tty="$(tmux display-message -p -t "$target_pane" '#{pane_tty}')"
+pane_pid="$(tmux display-message -p -t "$target_pane" '#{pane_pid}')"
+
+find_ssh_command() {
+  local tty_name="${pane_tty#/dev/}"
+  local line pid stat comm args candidate=""
+
+  while IFS= read -r line; do
+    line="${line#${line%%[![:space:]]*}}"
+    read -r pid stat comm args <<< "$line"
+
+    if [[ "$comm" == "ssh" && -n "${args:-}" ]]; then
+      if [[ "$stat" == *+* ]]; then
+        printf '%s\n' "$args"
+        return 0
+      fi
+
+      candidate="$args"
+    fi
+  done < <(ps -t "$tty_name" -o pid=,stat=,comm=,args= 2>/dev/null || true)
+
+  if [[ -n "$candidate" ]]; then
+    printf '%s\n' "$candidate"
+    return 0
+  fi
+
+  args="$(ps -o args= -p "$pane_pid" 2>/dev/null | sed 's/^[[:space:]]*//')"
+  if [[ "$args" == ssh || "$args" == ssh\ * ]]; then
+    printf '%s\n' "$args"
+    return 0
+  fi
+
+  return 1
+}
+
+if [[ "$current_command" == "ssh" ]]; then
+  if ssh_command="$(find_ssh_command)" && [[ -n "$ssh_command" ]]; then
+    exec tmux new-window "$ssh_command"
+  fi
+fi
+
+exec tmux new-window -c "$current_path"

@@ -1,0 +1,24 @@
+[metadata]
+name = "herdr-workspaces"
+description = "Switch Herdr workspaces or create one from a zoxide directory"
+requirements = ["herdr", "python3", "zoxide"]
+
+[ui]
+orientation = "portrait"
+
+[ui.preview_panel]
+hidden = true
+
+[source]
+command = "$HOME/.local/scripts/herdr-tv --source"
+ansi = true
+no_sort = true
+frecency = false
+
+[keybindings]
+enter = "actions:open"
+
+[actions.open]
+description = "Focus the workspace or create one for the directory"
+command = "$HOME/.local/scripts/herdr-tv --select-display '{strip_ansi}'"
+mode = "execute"

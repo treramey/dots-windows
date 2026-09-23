@@ -1,0 +1,5 @@
+{{ if eq (includeTemplate "theme-mode" .) "dynamic" -}}
+--theme="ansi"
+{{ else -}}
+--theme="rose-pine"
+{{ end -}}

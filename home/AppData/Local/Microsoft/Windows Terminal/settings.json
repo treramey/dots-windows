@@ -1,0 +1,46 @@
+{
+    "$help": "https://aka.ms/terminal-documentation",
+    "$schema": "https://aka.ms/terminal-profiles-schema",
+    "copyFormatting": "none",
+    "defaultProfile": "{b3b3f8a0-5c0f-4d90-9e1e-2e88b4f8d3c1}",
+    "profiles": {
+        "defaults": {
+            "colorScheme": "Rose Pine",
+            "font": {
+                "face": "MonoLisa Variable"
+            }
+        },
+        "list": [
+            {
+                "guid": "{b3b3f8a0-5c0f-4d90-9e1e-2e88b4f8d3c1}",
+                "name": "Ubuntu",
+                "commandline": "wsl.exe -d Ubuntu --cd ~"
+            }
+        ]
+    },
+    "schemes": [
+        {
+            "name": "Rose Pine",
+            "background": "#191724",
+            "foreground": "#E0DEF4",
+            "selectionBackground": "#403D52",
+            "cursorColor": "#EBBCBA",
+            "black": "#26233A",
+            "red": "#EB6F92",
+            "green": "#31748F",
+            "yellow": "#F6C177",
+            "blue": "#9CCFD8",
+            "purple": "#C4A7E7",
+            "cyan": "#EBBCBA",
+            "white": "#E0DEF4",
+            "brightBlack": "#6E6A86",
+            "brightRed": "#EB6F92",
+            "brightGreen": "#31748F",
+            "brightYellow": "#F6C177",
+            "brightBlue": "#9CCFD8",
+            "brightPurple": "#C4A7E7",
+            "brightCyan": "#EBBCBA",
+            "brightWhite": "#E0DEF4"
+        }
+    ]
+}

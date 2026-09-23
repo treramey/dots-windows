@@ -1,0 +1,16 @@
+#!/bin/bash
+
+export MISE_MINIMUM_RELEASE_AGE=0
+mise use -g --quiet "codex" || exit 1
+
+# Omarchy's usage collector still uses Codex's former `untrusted` approval
+# policy. Codex 0.149 replaced it with `never`; translate only that legacy
+# invocation until Omarchy updates its collector.
+args=("$@")
+for ((i = 0; i + 1 < ${#args[@]}; i++)); do
+  if [[ ${args[i]} == "-a" || ${args[i]} == "--ask-for-approval" ]] && [[ ${args[i + 1]} == "untrusted" ]]; then
+    args[i + 1]="never"
+  fi
+done
+
+exec mise x "codex" -- "codex" "${args[@]}"

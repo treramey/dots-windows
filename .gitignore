@@ -1,0 +1,79 @@
+# Neovim is a live workspace (shared submodule planned); never track it here.
+home/dot_config/nvim/
+
+# Editor and runtime artifacts
+*/**/.undodir
+lazy-lock.json
+neovide_rCURRENT.log
+.DS_Store
+.envrc
+.env
+.env.*
+__pycache__/
+*.pyc
+
+# jj
+.jj
+
+# Fish local state
+home/dot_config/fish/fish_variables
+home/dot_config/fish/conf.d/secrets.fish
+home/dot_config/fish/conf.d/vault-funcs.fish
+
+# Opencode runtime
+home/dot_config/opencode/node_modules/
+home/dot_config/opencode/*.bak
+.opencode/plans/
+
+# jj per-repo configs
+home/dot_config/jj/repos/
+
+# Agent skills intentionally kept local
+home/dot_agents/skills/ui/
+home/dot_claude/skills/code-review-workspace/
+
+# Tmux plugins are installed by TPM (chezmoi external)
+*/**/tmux/plugins/*
+
+# Local scratch
+backups/
+tmp/
+
+# Pi agent runtime state (keep settings + customization resources tracked)
+home/dot_pi/agent/*
+home/dot_pi/todos/*
+home/dot_pi/node_modules/
+.pi/todos/*
+.pi/semantic-grep.sqlite
+
+!home/dot_pi/settings.json
+!home/dot_pi/skills-lock.json
+!home/dot_pi/AGENTS.md
+!home/dot_pi/README.md
+!home/dot_pi/package.json
+!home/dot_pi/package-lock.json
+!home/dot_pi/tsconfig.json
+!home/dot_pi/.gitignore
+!home/dot_pi/agent/settings.json
+!home/dot_pi/agent/web-search.json
+!home/dot_pi/agent/pi-subagent-review.json
+!home/dot_pi/agent/pi-codex-conversion.json
+!home/dot_pi/agent/pi-auto-trees.json
+!home/dot_pi/agent/pi-smart-btw.json
+!home/dot_pi/agent/inline-skills.json
+!home/dot_pi/agent/tsconfig.json
+!home/dot_pi/agent/package.json
+!home/dot_pi/agent/cloak.json
+!home/dot_pi/agent/mcp.json
+!home/dot_pi/agent/APPEND_SYSTEM.md
+!home/dot_pi/agent/themes/
+!home/dot_pi/agent/themes/*.json
+!home/dot_pi/agent/shepherdr/
+!home/dot_pi/agent/shepherdr/**
+!home/dot_pi/agent/skills/
+!home/dot_pi/agent/skills/**
+!home/dot_pi/agent/extensions/
+!home/dot_pi/agent/extensions/**
+
+# Pi extension dependencies are never tracked (also covered by dot_pi/.gitignore)
+home/dot_pi/agent/extensions/**/node_modules/

@@ -1,0 +1,162 @@
+#|
+;; Homerow mods configuration with symbols layer
+;;
+;; Recommended usage for this layout:
+;; - Physical left Ctrl remains the primary Ctrl for common shortcuts
+;;   like Ctrl+C, Ctrl+V, Ctrl+X, Ctrl+Z, terminal/editor commands, etc.
+;; - Homerow a/; provide secondary Ctrl access for occasional use and
+;;   modifier chords, without sacrificing typing comfort.
+;;
+;; Mapping (mirror pairs):
+;; - a, ; = ctrl
+;; - s, l = alt
+;; - d, k = super/meta
+;; - f, j = shift
+
+(defcfg
+  process-unmapped-keys yes
+  concurrent-tap-hold yes
+)
+
+(defsrc
+  esc  f1   f2   f3   f4   f5   f6   f7   f8   f9   f10  f11  f12
+  grv  1    2    3    4    5    6    7    8    9    0    -    =    bspc
+  tab  q    w    e    r    t    y    u    i    o    p    [    ]    \
+  caps a    s    d    f    g    h    j    k    l    ;    '    ret
+  lsft z    x    c    v    b    n    m    ,    .    /    rsft
+  lctl lmet lalt           spc            ralt rmet rctl
+)
+
+(defvar
+  ;; Timing parameters
+  tap-timeout 200
+  hold-timeout 220
+
+  ;; Same-hand keys that should favor tap behavior.
+  ;; This keeps homerow mods comfortable for typing and reinforces the
+  ;; design choice that physical left Ctrl is the primary shortcut key.
+  ;; Keep homerow mod keys out of these lists so they can be combined
+  ;; with each other, e.g. s+d for Alt+Super.
+  left-hand-keys (
+    tab q w e r t
+    g
+    z x c v b
+  )
+
+  right-hand-keys (
+    y u i o p [ ] \
+    h
+    n m , . /
+  )
+)
+
+(defalias
+  ;; Left hand homerow mods
+  ;; Note: a = secondary Ctrl, not the primary Ctrl for heavy shortcut use.
+  a (tap-hold-except-keys $tap-timeout $hold-timeout a lctl $left-hand-keys)
+  s (tap-hold-except-keys $tap-timeout $hold-timeout s lalt $left-hand-keys)
+  d (tap-hold-except-keys $tap-timeout $hold-timeout d lmet $left-hand-keys)
+  f (tap-hold-except-keys $tap-timeout $hold-timeout f lsft $left-hand-keys)
+
+  ;; Right hand homerow mods
+  j (tap-hold-except-keys $tap-timeout $hold-timeout j rsft $right-hand-keys)
+  k (tap-hold-except-keys $tap-timeout $hold-timeout k rmet $right-hand-keys)
+  l (tap-hold-except-keys $tap-timeout $hold-timeout l ralt $right-hand-keys)
+  ; (tap-hold-except-keys $tap-timeout $hold-timeout ; rctl $right-hand-keys)
+
+  ;; Left Alt key: tap for esc, hold for symbols layer
+  sym (tap-hold-press $tap-timeout $hold-timeout esc (layer-while-held symbols))
+
+  ;; Caps: tap for esc, hold for arrows layer
+  cap (tap-hold-press $tap-timeout $hold-timeout esc (layer-while-held arrows))
+)
+
+(deflayer base
+  esc  f1   f2   f3   f4   f5   f6   f7   f8   f9   f10  f11  f12
+  grv  1    2    3    4    5    6    7    8    9    0    -    =    bspc
+  tab  q    w    e    r    t    y    u    i    o    p    [    ]    \
+  @cap @a   @s   @d   @f   g    h    @j   @k   @l   @;   '    ret
+  lsft z    x    c    v    b    n    m    ,    .    /    rsft
+  lctl lmet @sym           spc            ralt rmet rctl
+)
+
+(deflayer symbols
+  esc  f1   f2   f3   f4   f5   f6   f7   f8   f9   f10  f11  f12
+  _    _    _    _    _    _    _    _    _    _    _    _    _    _
+  _    grv  S-grv \    S-min S-7  S-8  -    /    S-\  ;    _    _    _
+  del  S-,  S-[  [    S-9  S-4  S-1  S-0  ]    S-]  S-.  _    _
+  _    _    _    S-5  S-=  S-2  S-6  =    S-3  _    _    _
+  _    _    _              _              _    _    _
+)
+
+(deflayer arrows
+  esc  f1   f2   f3   f4   f5   f6   f7   f8   f9   f10  f11  f12
+  _    _    _    _    _    _    _    _    _    _    _    _    _    _
+  _    _    _    _    _    _    _    _    _    _    _    _    _    _
+  _    lctl lalt lmet lsft _    left down up   rght home end  _
+  _    _    _    _    _    _    pgdn pgup _    _    _    _
+  _    _    _              _              _    _    _
+)
+|#
+
+;; Active config:
+;; - hold Right Alt for the symbols layer, tap for Right Alt
+;; - hold Caps Lock for Left Ctrl
+;; - hold Tab for arrows on h/j/k/l, tap for Tab
+
+(defcfg
+  process-unmapped-keys yes
+  concurrent-tap-hold yes
+)
+
+(defsrc
+  esc  f1   f2   f3   f4   f5   f6   f7   f8   f9   f10  f11  f12
+  grv  1    2    3    4    5    6    7    8    9    0    -    =    bspc
+  tab  q    w    e    r    t    y    u    i    o    p    [    ]    \
+  caps a    s    d    f    g    h    j    k    l    ;    '    ret
+  lsft z    x    c    v    b    n    m    ,    .    /    rsft
+  lctl lmet lalt           spc            ralt rmet rctl
+)
+
+(defvar
+  tap-timeout 200
+  hold-timeout 220
+)
+
+(defalias
+  ;; Tap Right Alt, hold symbols.
+  sym (tap-hold-press $tap-timeout $hold-timeout ralt (layer-while-held symbols))
+
+  ;; Tap Caps Lock for Esc, hold Left Ctrl.
+  cap (tap-hold-press $tap-timeout $hold-timeout esc lctl)
+
+  ;; Tap Tab, hold arrows on h/j/k/l.
+  nav (tap-hold-press $tap-timeout $hold-timeout tab (layer-while-held arrows))
+)
+
+(deflayer base
+  _    _    _    _    _    _    _    _    _    _    _    _    _
+  _    _    _    _    _    _    _    _    _    _    _    _    _    _
+  @nav _    _    _    _    _    _    _    _    _    _    _    _    _
+  @cap _    _    _    _    _    h    j    k    l    _    _    _
+  _    _    _    _    _    _    _    _    _    _    _    _
+  _    _    _              _              @sym _    _
+)
+
+(deflayer symbols
+  _    _    _    _    _    _    _    _    _    _    _    _    _
+  _    _    _    _    _    _    _    _    _    _    _    _    _    _
+  _    grv  S-grv \    S-min S-7  S-8  -    /    S-\  ;    _    _    _
+  del  S-,  S-[  [    S-9  S-4  S-1  S-0  ]    S-]  S-.  _    _
+  _    _    _    S-5  S-=  S-2  S-6  =    S-3  _    _    _
+  _    _    _              _              _    _    _
+)
+
+(deflayer arrows
+  _    _    _    _    _    _    _    _    _    _    _    _    _
+  _    _    _    _    _    _    _    _    _    _    _    _    _    _
+  _    _    _    _    _    _    _    _    _    _    _    _    _    _
+  _    _    _    _    _    _    left down up   rght _    _    _
+  _    _    _    _    _    _    _    _    _    _    _    _
+  _    _    _              _              _    _    _
+)

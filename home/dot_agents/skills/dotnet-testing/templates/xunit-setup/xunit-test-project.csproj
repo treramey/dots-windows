@@ -1,0 +1,62 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Target framework version -->
+    <TargetFramework>net9.0</TargetFramework>
+
+    <!-- Enable implicit usings, automatically importing common namespaces -->
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- Enable nullable reference type checking -->
+    <Nullable>enable</Nullable>
+
+    <!-- Test projects should not be packed into a NuGet package -->
+    <IsPackable>false</IsPackable>
+
+    <!-- Explicitly mark as a test project so test tooling discovers it -->
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- xUnit core test framework -->
+    <!-- Provides [Fact], [Theory], Assert, and other core APIs -->
+    <PackageReference Include="xunit" />
+
+    <!-- xUnit Visual Studio test runner -->
+    <!-- Lets Visual Studio, VS Code, Rider, etc. discover and execute tests -->
+    <PackageReference Include="xunit.runner.visualstudio">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+
+    <!-- .NET Test Platform SDK -->
+    <!-- Powers the `dotnet test` command and test result reporting -->
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+
+    <!-- Coverlet code coverage collector -->
+    <!-- Integrates with `dotnet test --collect` and produces coverage reports -->
+    <PackageReference Include="coverlet.collector">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+
+    <!-- Convention packages used by the rest of the umbrella skill -->
+    <PackageReference Include="AwesomeAssertions" />
+    <PackageReference Include="NSubstitute" />
+    <PackageReference Include="AutoFixture" />
+    <PackageReference Include="AutoFixture.AutoNSubstitute" />
+    <PackageReference Include="AutoFixture.Xunit2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Global using for xUnit so test files don't need `using Xunit;` -->
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <!-- Project reference: test project references the production project under test -->
+  <!-- Adjust the path below to point at your production project -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\YourProject.Core\YourProject.Core.csproj" />
+  </ItemGroup>
+
+</Project>

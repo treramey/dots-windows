@@ -1,0 +1,35 @@
+id = "treramey.sesh-windows"
+name = "Sesh for Windows"
+version = "0.1.0"
+min_herdr_version = "0.8.2"
+description = "Native Windows workspace picker for Herdr using fzf, zoxide, and optional Sesh config"
+platforms = ["windows"]
+
+[[startup]]
+command = ["pwsh.exe", "-NoLogo", "-NoProfile", "-File", "herdr-sesh-windows.ps1", "sync-history"]
+
+[[events]]
+on = "workspace.focused"
+command = ["pwsh.exe", "-NoLogo", "-NoProfile", "-File", "herdr-sesh-windows.ps1", "track-focus"]
+
+[[events]]
+on = "workspace.closed"
+command = ["pwsh.exe", "-NoLogo", "-NoProfile", "-File", "herdr-sesh-windows.ps1", "remove-closed"]
+
+[[actions]]
+id = "open-picker"
+title = "Open Sesh workspace picker"
+contexts = ["workspace", "pane"]
+command = ["pwsh.exe", "-NoLogo", "-NoProfile", "-File", "herdr-sesh-windows.ps1", "open-picker"]
+
+[[actions]]
+id = "last"
+title = "Switch to previous workspace"
+contexts = ["workspace", "pane"]
+command = ["pwsh.exe", "-NoLogo", "-NoProfile", "-File", "herdr-sesh-windows.ps1", "last"]
+
+[[panes]]
+id = "picker"
+title = "Sesh Picker"
+placement = "overlay"
+command = ["pwsh.exe", "-NoLogo", "-NoProfile", "-File", "herdr-sesh-windows.ps1", "picker"]

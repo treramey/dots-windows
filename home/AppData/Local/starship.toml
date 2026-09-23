@@ -1,0 +1,50 @@
+# Windows Starship prompt: a compact, two-line Rose Pine prompt inspired by
+# Omarchy. It intentionally uses only portable modules and Unicode symbols.
+
+add_newline = false
+palette = "rose_pine"
+
+format = """
+[╭─](foam)$directory$git_branch$git_status$fill$cmd_duration$line_break[╰─](foam)$character"""
+
+[palettes.rose_pine]
+base = "#191724"
+surface = "#1f1d2e"
+overlay = "#26233a"
+muted = "#6e6a86"
+subtle = "#908caa"
+text = "#e0def4"
+love = "#eb6f92"
+gold = "#f6c177"
+rose = "#ebbcba"
+pine = "#31748f"
+foam = "#9ccfd8"
+iris = "#c4a7e7"
+
+[character]
+success_symbol = "[❯](foam)"
+error_symbol = "[❯](love)"
+vimcmd_symbol = "[❮](iris)"
+
+[directory]
+style = "bold foam"
+truncation_length = 3
+truncate_to_repo = true
+truncation_symbol = "…/"
+
+[git_branch]
+symbol = " "
+style = "bold iris"
+format = "[$symbol$branch]($style)"
+
+[git_status]
+style = "gold"
+format = "[ $all_status$ahead_behind]($style)"
+
+[cmd_duration]
+min_time = 1_000
+style = "muted"
+format = "[ $duration]($style)"
+
+[fill]
+symbol = " "

@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Print sesh entries for Television, highlighting tmux sessions that are
+# already open. tv is configured with `ansi = true` for this channel, so
+# these ANSI styles render in the results list while actions still use
+# `{strip_ansi|...}` to get the raw session/path value.
+open_sessions="$(mktemp)"
+trap 'rm -f "$open_sessions"' EXIT
+
+tmux list-sessions -F '#S' >"$open_sessions" 2>/dev/null || :
+
+sesh list -i --icons \
+  | sed -r 's/\x1B\[[0-9;]*[mK]//g' \
+  | awk '
+      NR == FNR { open[$0] = 1; next }
+      {
+        name = $0
+        sub(/^[^[:space:]]+[[:space:]]+/, "", name)
+
+        if (name in open) {
+          # Active tmux sessions: color only the leading icon; leave text/theme colors alone.
+          icon = $1
+          rest = substr($0, length(icon) + 1)
+          printf "\033[1;35m%s\033[22;39m%s\n", icon, rest
+        } else {
+          print $0
+        }
+      }
+    ' "$open_sessions" -

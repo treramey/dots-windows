@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+agent_socket="${SSH_AUTH_SOCK:-$HOME/.bitwarden-ssh-agent.sock}"
+named_pipe="//./pipe/openssh-ssh-agent"
+npiperelay_path=""
+
+if command -v npiperelay.exe >/dev/null 2>&1; then
+    npiperelay_path="$(command -v npiperelay.exe)"
+else
+    for candidate in \
+        /mnt/c/Users/*/scoop/apps/npiperelay/current/npiperelay.exe \
+        /mnt/c/Users/*/AppData/Local/Microsoft/WinGet/Packages/albertony.npiperelay_*/npiperelay.exe; do
+        if [[ -x "$candidate" ]]; then
+            npiperelay_path="$candidate"
+            break
+        fi
+    done
+fi
+
+if [[ -z "$npiperelay_path" || ! -x "$npiperelay_path" ]]; then
+    printf 'Bitwarden SSH bridge: npiperelay.exe was not found on the Windows host.\n' >&2
+    exit 1
+fi
+
+mkdir -p "$(dirname -- "$agent_socket")"
+exec socat "UNIX-LISTEN:${agent_socket},fork,mode=600" \
+    EXEC:"${npiperelay_path} -ei -s ${named_pipe}",nofork

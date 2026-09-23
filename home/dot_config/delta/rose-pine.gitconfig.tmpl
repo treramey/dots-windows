@@ -1,0 +1,29 @@
+# Activated by the git config include in static theme mode.
+[delta]
+	features = rose-pine
+
+[delta "rose-pine"]
+	blame-palette = "{{ .rose_pine.base }} {{ .rose_pine.surface }} {{ .rose_pine.overlay }} {{ .rose_pine.muted }} {{ .rose_pine.subtle }}"
+	commit-decoration-style = "{{ .rose_pine.muted }}" bold box ul
+	dark = true
+	file-decoration-style = "{{ .rose_pine.muted }}"
+	file-style = "{{ .rose_pine.text }}"
+	hunk-header-decoration-style = "{{ .rose_pine.muted }}" box ul
+	hunk-header-file-style = bold
+	hunk-header-line-number-style = bold "{{ .rose_pine.subtle }}"
+	hunk-header-style = file line-number syntax
+	line-numbers-left-style = "{{ .rose_pine.muted }}"
+	line-numbers-minus-style = bold "{{ .rose_pine.love }}"
+	line-numbers-plus-style = bold "{{ .rose_pine.foam }}"
+	line-numbers-right-style = "{{ .rose_pine.muted }}"
+	line-numbers-zero-style = "{{ .rose_pine.muted }}"
+	minus-emph-style = bold syntax "#69394e"
+	minus-style = syntax "#412839"
+	plus-emph-style = bold syntax "#71929c"
+	plus-style = syntax "#323b47"
+	map-styles = \
+		bold purple => syntax "{{ .rose_pine.iris }}", \
+		bold blue => syntax "{{ .rose_pine.pine }}", \
+		bold cyan => syntax "{{ .rose_pine.foam }}", \
+		bold yellow => syntax "{{ .rose_pine.gold }}"
+	syntax-theme = rose-pine

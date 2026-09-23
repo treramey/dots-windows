@@ -1,0 +1,76 @@
+{{ if eq (includeTemplate "theme-mode" .) "dynamic" -}}
+[include]
+	# Delta feature definitions (managed), then the live light/dark selection
+	# the omarchy theme-set hook writes outside chezmoi's view.
+	path = "~/.config/delta/system.gitconfig"
+	path = "~/.cache/delta-features.gitconfig"
+
+{{ else -}}
+[include]
+	path = "~/.config/delta/rose-pine.gitconfig"
+
+{{ end -}}
+[alias]
+	fomo = "!git fetch origin $(__git.default_branch) && git rebase origin/$(__git.default_branch) --autostash"
+	lg = "!git_log_n $argv"
+	nuke = "!git add --all && git stash && git stash clear"
+
+[branch]
+	sort = "-committerdate"
+
+[column]
+	ui = "auto"
+
+[commit]
+	gpgSign = true
+
+[core]
+	editor = "nvim"
+	fsmonitor = true
+{{ if eq .chezmoi.os "windows" }}
+	sshCommand = C:/Windows/System32/OpenSSH/ssh.exe
+	autocrlf = true
+{{- end }}
+[fetch]
+	prune = true
+	writeCommitGraph = true
+
+[filter "lfs"]
+	clean = "git-lfs clean -- %f"
+	process = "git-lfs filter-process"
+	required = true
+	smudge = "git-lfs smudge -- %f"
+
+[gpg]
+	format = "ssh"
+
+[init]
+	defaultBranch = "main"
+
+[pull]
+	rebase = true
+
+[rebase]
+	updateRefs = true
+
+[rerere]
+	enabled = true
+
+[tag]
+	gpgSign = true
+
+[user]
+	email = "trevor@trevors.email"
+	name = "Trevor Ramey"
+{{ if eq .chezmoi.os "windows" }}	signingkey = key::ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJbKMbLqg0LRdosafiUSzYKJO4Od1FSS5VQHpa54lE2n Github
+{{- else }}	signingKey = "~/.ssh/id_ed25519.pub"
+{{- end }}
+
+[includeIf "gitdir:~/Code/work/"]
+	path = "~/.config/git/work_config"
+{{ if eq .chezmoi.os "windows" -}}
+[gpg "ssh"]
+	program = C:/Windows/System32/OpenSSH/ssh-keygen.exe
+[credential "helperselector"]
+	selected = wincred
+{{- end }}

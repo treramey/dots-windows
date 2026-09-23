@@ -1,0 +1,17 @@
+{{ if eq (includeTemplate "is-wsl" .) "true" -}}
+[Unit]
+Description=Bitwarden SSH agent bridge from Windows to WSL
+Documentation=https://bitwarden.com/help/ssh-agent/
+After=default.target
+
+[Service]
+Type=simple
+Environment=SSH_AUTH_SOCK=%h/.bitwarden-ssh-agent.sock
+ExecStartPre=-/usr/bin/rm -f %h/.bitwarden-ssh-agent.sock
+ExecStart=%h/.local/bin/bitwarden-ssh-agent-bridge
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=default.target
+{{ end -}}

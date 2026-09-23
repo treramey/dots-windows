@@ -1,0 +1,48 @@
+#!/bin/bash
+set -euo pipefail
+
+# Omarchy calls this hook with the new theme's name on every theme switch.
+# One adapter per tool, all inline; runtime state lands only in ~/.cache so
+# chezmoi-managed configs never drift.
+
+theme_name="${1:?usage: theme-set <omarchy-theme-name>}"
+theme_dir="$HOME/.local/state/omarchy/current/theme"
+
+mkdir -p ~/.cache
+
+# nvim: delegate raw input to the switcher, which resolves and writes canonical state.
+switcher="$HOME/.local/scripts/nvim-theme-switch"
+
+if [[ -x "$switcher" ]]; then
+  "$switcher" "$theme_name" || true
+elif command -v nvim-theme-switch >/dev/null 2>&1; then
+  nvim-theme-switch "$theme_name" || true
+fi
+
+write_delta_features() {
+  # git config includes this cache file after delta/system.gitconfig, so the
+  # light/dark feature selection follows the active theme.
+  local feature="system-dark"
+  if [[ -f "$theme_dir/light.mode" ]]; then
+    feature="system-light"
+  fi
+  git config --file ~/.cache/delta-features.gitconfig delta.features "$feature"
+}
+
+delta_switcher="$HOME/.local/scripts/delta-omarchy-theme"
+
+if [[ -x "$delta_switcher" ]]; then
+  "$delta_switcher" || write_delta_features
+elif command -v delta-omarchy-theme >/dev/null 2>&1; then
+  delta-omarchy-theme || write_delta_features
+else
+  write_delta_features
+fi
+
+vesktop_switcher="$HOME/.local/scripts/omarchy-theme-set-vesktop"
+
+if [[ -x "$vesktop_switcher" ]]; then
+  "$vesktop_switcher" || true
+elif command -v omarchy-theme-set-vesktop >/dev/null 2>&1; then
+  omarchy-theme-set-vesktop || true
+fi

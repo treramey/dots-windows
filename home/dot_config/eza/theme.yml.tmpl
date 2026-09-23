@@ -1,0 +1,229 @@
+{{ if eq (includeTemplate "theme-mode" .) "dynamic" -}}
+colourful: true
+
+# Omarchy/system theme: ANSI color names only.
+# The active terminal palette supplies the actual colors.
+
+filekinds:
+  normal: { foreground: "default" }
+  directory: { foreground: "blue" }
+  symlink: { foreground: "cyan" }
+  pipe: { foreground: "yellow" }
+  block_device: { foreground: "yellow" }
+  char_device: { foreground: "yellow" }
+  socket: { foreground: "magenta" }
+  special: { foreground: "magenta" }
+  executable: { foreground: "green" }
+  mount_point: { foreground: "blue" }
+
+perms:
+  user_read: { foreground: "default" }
+  user_write: { foreground: "yellow" }
+  user_execute_file: { foreground: "green" }
+  user_execute_other: { foreground: "green" }
+  group_read: { foreground: "default" }
+  group_write: { foreground: "yellow" }
+  group_execute: { foreground: "green" }
+  other_read: { foreground: "default" }
+  other_write: { foreground: "yellow" }
+  other_execute: { foreground: "green" }
+  special_user_file: { foreground: "red" }
+  special_other: { foreground: "red" }
+  attribute: { foreground: "cyan" }
+
+size:
+  major: { foreground: "default" }
+  minor: { foreground: "cyan" }
+  number_byte: { foreground: "default" }
+  number_kilo: { foreground: "yellow" }
+  number_mega: { foreground: "green" }
+  number_giga: { foreground: "magenta" }
+  number_huge: { foreground: "red" }
+  unit_byte: { foreground: "default" }
+  unit_kilo: { foreground: "yellow" }
+  unit_mega: { foreground: "green" }
+  unit_giga: { foreground: "magenta" }
+  unit_huge: { foreground: "red" }
+
+users:
+  user_you: { foreground: "yellow" }
+  user_root: { foreground: "red" }
+  user_other: { foreground: "magenta" }
+  group_yours: { foreground: "cyan" }
+  group_other: { foreground: "default" }
+  group_root: { foreground: "red" }
+
+links:
+  normal: { foreground: "cyan" }
+  multi_link_file: { foreground: "blue" }
+
+git:
+  new: { foreground: "green" }
+  modified: { foreground: "yellow" }
+  deleted: { foreground: "red" }
+  renamed: { foreground: "cyan" }
+  typechange: { foreground: "magenta" }
+  ignored: { foreground: "default" }
+  conflicted: { foreground: "red" }
+
+git_repo:
+  branch_main: { foreground: "default" }
+  branch_other: { foreground: "magenta" }
+  git_clean: { foreground: "green" }
+  git_dirty: { foreground: "yellow" }
+
+security_context:
+  colon: { foreground: "default" }
+  user: { foreground: "cyan" }
+  role: { foreground: "magenta" }
+  typ: { foreground: "default" }
+  range: { foreground: "magenta" }
+
+file_type:
+  image: { foreground: "yellow" }
+  video: { foreground: "red" }
+  music: { foreground: "cyan" }
+  lossless: { foreground: "blue" }
+  crypto: { foreground: "yellow" }
+  document: { foreground: "default" }
+  compressed: { foreground: "magenta" }
+  temp: { foreground: "red" }
+  compiled: { foreground: "green" }
+  build: { foreground: "yellow" }
+  source: { foreground: "cyan" }
+
+punctuation: { foreground: "default" }
+date: { foreground: "green" }
+inode: { foreground: "default" }
+blocks: { foreground: "default" }
+header: { foreground: "blue" }
+octal: { foreground: "cyan" }
+flags: { foreground: "magenta" }
+
+symlink_path: { foreground: "cyan" }
+control_char: { foreground: "green" }
+broken_symlink: { foreground: "red" }
+broken_path_overlay: { foreground: "default" }
+{{ else -}}
+colourful: true
+
+# Colors are in format of:
+# color/paletteRef (Description) #color code
+
+# Gold (Terminal Yellow) {{ .rose_pine.gold }}
+# Love (Terminal Red) {{ .rose_pine.love }}
+# Rose (Terminal Cyan) {{ .rose_pine.rose }}
+# Base (Primary Background) {{ .rose_pine.base }}
+# Iris (Terminal Magenta) {{ .rose_pine.iris }}
+# Foam (Terminal Blue) {{ .rose_pine.foam }}
+# Pine (Terminal Green)  {{ .rose_pine.pine }}
+# Muted (Low Contrast Foreground) {{ .rose_pine.muted }}
+# Surface (Secondary Background Atop Base) {{ .rose_pine.surface }}
+# Overlay (Tertiary Background Atop Surface) {{ .rose_pine.overlay }}
+# Subtle (Medium Contrast Foreground) {{ .rose_pine.subtle }}
+# Text (High Contrast Foreground) {{ .rose_pine.text }}
+# Highlight Low (Low Contrast Highlight) {{ .rose_pine.highlight_low }}
+# Highlight Med (Medium Contrast Highlight) {{ .rose_pine.highlight_med }}
+# Highlight High (High Contrast Highlight) {{ .rose_pine.highlight_high }}
+
+filekinds:
+  normal: { foreground: "{{ .rose_pine.text }}" }
+  directory: { foreground: "{{ .rose_pine.foam }}" }
+  symlink: { foreground: "{{ .rose_pine.highlight_high }}" }
+  pipe: { foreground: "{{ .rose_pine.subtle }}" }
+  block_device: { foreground: "{{ .rose_pine.rose }}" }
+  char_device: { foreground: "{{ .rose_pine.gold }}" }
+  socket: { foreground: "{{ .rose_pine.highlight_low }}" }
+  special: { foreground: "{{ .rose_pine.iris }}" }
+  executable: { foreground: "{{ .rose_pine.iris }}" }
+  mount_point: { foreground: "{{ .rose_pine.highlight_med }}" }
+
+perms:
+  user_read: { foreground: "{{ .rose_pine.subtle }}" }
+  user_write: { foreground: "{{ .rose_pine.highlight_med }}" }
+  user_execute_file: { foreground: "{{ .rose_pine.iris }}" }
+  user_execute_other: { foreground: "{{ .rose_pine.iris }}" }
+  group_read: { foreground: "{{ .rose_pine.subtle }}" }
+  group_write: { foreground: "{{ .rose_pine.highlight_med }}" }
+  group_execute: { foreground: "{{ .rose_pine.iris }}" }
+  other_read: { foreground: "{{ .rose_pine.subtle }}" }
+  other_write: { foreground: "{{ .rose_pine.highlight_med }}" }
+  other_execute: { foreground: "{{ .rose_pine.iris }}" }
+  special_user_file: { foreground: "{{ .rose_pine.iris }}" }
+  special_other: { foreground: "{{ .rose_pine.highlight_med }}" }
+  attribute: { foreground: "{{ .rose_pine.subtle }}" }
+
+size:
+  major: { foreground: "{{ .rose_pine.subtle }}" }
+  minor: { foreground: "{{ .rose_pine.foam }}" }
+  number_byte: { foreground: "{{ .rose_pine.subtle }}" }
+  number_kilo: { foreground: "{{ .rose_pine.highlight_high }}" }
+  number_mega: { foreground: "{{ .rose_pine.pine }}" }
+  number_giga: { foreground: "{{ .rose_pine.iris }}" }
+  number_huge: { foreground: "{{ .rose_pine.iris }}" }
+  unit_byte: { foreground: "{{ .rose_pine.subtle }}" }
+  unit_kilo: { foreground: "{{ .rose_pine.pine }}" }
+  unit_mega: { foreground: "{{ .rose_pine.iris }}" }
+  unit_giga: { foreground: "{{ .rose_pine.iris }}" }
+  unit_huge: { foreground: "{{ .rose_pine.foam }}" }
+
+users:
+  user_you: { foreground: "{{ .rose_pine.gold }}" }
+  user_root: { foreground: "{{ .rose_pine.love }}" }
+  user_other: { foreground: "{{ .rose_pine.iris }}" }
+  group_yours: { foreground: "{{ .rose_pine.highlight_high }}" }
+  group_other: { foreground: "{{ .rose_pine.muted }}" }
+  group_root: { foreground: "{{ .rose_pine.love }}" }
+
+links:
+  normal: { foreground: "{{ .rose_pine.foam }}" }
+  multi_link_file: { foreground: "{{ .rose_pine.pine }}" }
+
+git:
+  new: { foreground: "{{ .rose_pine.foam }}" }
+  modified: { foreground: "{{ .rose_pine.gold }}" }
+  deleted: { foreground: "{{ .rose_pine.love }}" }
+  renamed: { foreground: "{{ .rose_pine.pine }}" }
+  typechange: { foreground: "{{ .rose_pine.iris }}" }
+  ignored: { foreground: "{{ .rose_pine.muted }}" }
+  conflicted: { foreground: "{{ .rose_pine.rose }}" }
+
+git_repo:
+  branch_main: { foreground: "{{ .rose_pine.subtle }}" }
+  branch_other: { foreground: "{{ .rose_pine.iris }}" }
+  git_clean: { foreground: "{{ .rose_pine.foam }}" }
+  git_dirty: { foreground: "{{ .rose_pine.love }}" }
+
+security_context:
+  colon: { foreground: "{{ .rose_pine.subtle }}" }
+  user: { foreground: "{{ .rose_pine.foam }}" }
+  role: { foreground: "{{ .rose_pine.iris }}" }
+  typ: { foreground: "{{ .rose_pine.muted }}" }
+  range: { foreground: "{{ .rose_pine.iris }}" }
+
+file_type:
+  image: { foreground: "{{ .rose_pine.gold }}" }
+  video: { foreground: "{{ .rose_pine.love }}" }
+  music: { foreground: "{{ .rose_pine.foam }}" }
+  lossless: { foreground: "{{ .rose_pine.muted }}" }
+  crypto: { foreground: "{{ .rose_pine.highlight_med }}" }
+  document: { foreground: "{{ .rose_pine.subtle }}" }
+  compressed: { foreground: "{{ .rose_pine.iris }}" }
+  temp: { foreground: "{{ .rose_pine.rose }}" }
+  compiled: { foreground: "{{ .rose_pine.pine }}" }
+  build: { foreground: "{{ .rose_pine.muted }}" }
+  source: { foreground: "{{ .rose_pine.rose }}" }
+
+punctuation: { foreground: "{{ .rose_pine.highlight_high }}" }
+date: { foreground: "{{ .rose_pine.pine }}" }
+inode: { foreground: "{{ .rose_pine.subtle }}" }
+blocks: { foreground: "{{ .rose_pine.muted }}" }
+header: { foreground: "{{ .rose_pine.subtle }}" }
+octal: { foreground: "{{ .rose_pine.foam }}" }
+flags: { foreground: "{{ .rose_pine.iris }}" }
+
+symlink_path: { foreground: "{{ .rose_pine.foam }}" }
+control_char: { foreground: "{{ .rose_pine.pine }}" }
+broken_symlink: { foreground: "{{ .rose_pine.love }}" }
+broken_path_overlay: { foreground: "{{ .rose_pine.highlight_high }}" }
+{{ end -}}

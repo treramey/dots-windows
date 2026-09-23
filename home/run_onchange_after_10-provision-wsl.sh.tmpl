@@ -1,0 +1,102 @@
+{{ if eq (includeTemplate "is-wsl" .) "true" -}}
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# apt-packages: {{ .packages.ubuntu.apt | toJson | sha256sum }}
+# mise-tools: {{ .packages.mise | toJson | sha256sum }}
+# bitwarden-bridge: {{ includeTemplate "bitwarden-ssh-agent-bridge" . | sha256sum }}
+
+write_wsl_provision_step() {
+    printf '\n==> %s\n' "$1"
+}
+
+install_wsl_apt_packages() {
+    local apt_packages=(
+{{ range .packages.ubuntu.apt -}}
+        {{ . | quote }}
+{{ end -}}
+    )
+
+    write_wsl_provision_step "Reconciling Ubuntu packages"
+    sudo apt-get update
+    sudo apt-get install --yes "${apt_packages[@]}"
+    git lfs install
+}
+
+install_wsl_mise() {
+    if command -v mise >/dev/null 2>&1; then
+        return
+    fi
+
+    write_wsl_provision_step "Installing Mise from its Ubuntu repository"
+    sudo extrepo enable mise
+    sudo apt-get update
+    sudo apt-get install --yes mise
+}
+
+link_wsl_live_workspace() {
+    local source_path="$1"
+    local target_path="$2"
+
+    mkdir -p "$(dirname -- "$target_path")"
+    if [[ -L "$target_path" && "$(readlink -f -- "$target_path")" == "$(readlink -f -- "$source_path")" ]]; then
+        return
+    fi
+    if [[ -e "$target_path" || -L "$target_path" ]]; then
+        printf "WSL provisioning link conflict: '%s' already exists.\n" "$target_path" >&2
+        exit 1
+    fi
+    ln -s "$source_path" "$target_path"
+    printf '    Linked %s -> %s\n' "$target_path" "$source_path"
+}
+
+link_wsl_live_workspaces() {
+    local repository_path
+    # This script runs inside `chezmoi apply`, which owns the persistent-state
+    # lock. Do not invoke chezmoi recursively here; its source path is already
+    # available when this template is rendered.
+    repository_path="$(git -C {{ .chezmoi.sourceDir | quote }} rev-parse --show-toplevel)"
+
+    write_wsl_provision_step "Reconciling live dotfiles workspaces"
+    link_wsl_live_workspace "$repository_path/home/dot_config/nvim" "$HOME/.config/nvim"
+    link_wsl_live_workspace "$repository_path/home/dot_pi" "$HOME/.pi"
+    link_wsl_live_workspace "$repository_path/home/dot_agents" "$HOME/.agents"
+}
+
+install_wsl_mise_tools() {
+    write_wsl_provision_step "Reconciling pinned Mise tools"
+    export PATH="$HOME/.local/bin:$PATH"
+    mise --yes install
+}
+
+enable_wsl_bitwarden_ssh_bridge() {
+    if [[ "$(ps -p 1 -o comm=)" != "systemd" ]]; then
+        printf 'WSL provisioning warning: systemd is not running; Bitwarden SSH bridge was not enabled.\n' >&2
+        return
+    fi
+
+    write_wsl_provision_step "Enabling Bitwarden SSH agent bridge"
+    if ! sudo loginctl enable-linger "$USER"; then
+        printf 'WSL provisioning warning: could not enable user-service lingering.\n' >&2
+    fi
+    systemctl --user daemon-reload
+    systemctl --user enable bitwarden-ssh-agent-bridge.service
+    if ! systemctl --user restart bitwarden-ssh-agent-bridge.service; then
+        printf 'WSL provisioning warning: Bitwarden SSH bridge is not ready; install npiperelay on Windows, enable Bitwarden SSH Agent, then rerun chezmoi apply.\n' >&2
+        return
+    fi
+
+    local agent_socket="$HOME/.bitwarden-ssh-agent.sock"
+    if ! SSH_AUTH_SOCK="$agent_socket" timeout 5 ssh-add -L >/dev/null 2>&1; then
+        printf 'WSL provisioning warning: Bitwarden bridge is listening, but no SSH keys are available. Open and unlock Bitwarden Desktop, enable Settings > SSH agent, then restart bitwarden-ssh-agent-bridge.service.\n' >&2
+    fi
+}
+
+install_wsl_apt_packages
+install_wsl_mise
+link_wsl_live_workspaces
+install_wsl_mise_tools
+enable_wsl_bitwarden_ssh_bridge
+mkdir -p "$HOME/src"
+{{ end -}}

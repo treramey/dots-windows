@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- xUnit 3.x: test projects are executables -->
+    <OutputType>Exe</OutputType>
+
+    <!-- xUnit 3.x minimum: .NET 8+ or .NET Framework 4.7.2+ -->
+    <TargetFramework>net8.0</TargetFramework>
+
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+
+    <!-- Microsoft Testing Platform is the default in xUnit 3.x -->
+    <EnableMicrosoftTestingPlatform>true</EnableMicrosoftTestingPlatform>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- xUnit v3 — note the package id is `xunit.v3`, NOT `xunit` -->
+    <PackageReference Include="xunit.v3" />
+
+    <!-- Visual Studio Test Explorer integration (3.x line) -->
+    <PackageReference Include="xunit.runner.visualstudio">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+
+    <!-- .NET Test SDK — still required for IDE integration and `dotnet test` in VSTest mode -->
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+
+    <!-- Convention packages used by the rest of the umbrella skill -->
+    <PackageReference Include="AwesomeAssertions" />
+    <PackageReference Include="NSubstitute" />
+    <PackageReference Include="AutoFixture.Xunit3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Project reference: test project references the production project under test -->
+    <ProjectReference Include="..\src\YourProject\YourProject.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- xUnit runner configuration -->
+    <None Update="xunit.runner.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

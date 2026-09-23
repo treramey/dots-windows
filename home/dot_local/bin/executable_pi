@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+pi_binary=$(mise which pi 2>/dev/null || true)
+if [[ -z "$pi_binary" || ! -x "$pi_binary" ]]; then
+    printf 'Pi launcher: Mise could not locate the managed Pi executable.\n' >&2
+    exit 1
+fi
+
+omarchy_theme="$HOME/.local/state/omarchy/current/theme/pi.json"
+if [[ -d "$HOME/.local/share/omarchy" && -f "$omarchy_theme" ]]; then
+    exec "$pi_binary" \
+        --theme "$omarchy_theme" \
+        --use-theme omarchy-system \
+        "$@"
+fi
+
+exec "$pi_binary" "$@"

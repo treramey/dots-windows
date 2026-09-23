@@ -1,0 +1,36 @@
+[metadata]
+name = "tmux-sesh"
+description = "Session manager integrating tmux sessions, zoxide directories, and config paths"
+requirements = ["sesh", "fd"]
+
+[ui.preview_panel]
+hidden = true
+
+[ui]
+orientation = "portrait"
+
+[source]
+# The first source strips Sesh's built-in colors, then re-adds a single
+# Television-specific style for tmux sessions that are already open.
+# `output`/actions use strip_ansi so the styling does not affect connecting.
+command = ["$HOME/.local/scripts/tv-sesh-source", "$HOME/.local/scripts/tv-tmux-source", "fd -H -t d -E .Trash ."]
+ansi = true
+no_sort = true
+output = "{strip_ansi|split: :1..|join: }"
+
+[preview]
+command = "sesh preview '{strip_ansi|split: :1..|join: }'"
+
+[keybindings]
+enter = "actions:connect"
+ctrl-d = ["actions:kill_session", "reload_source"]
+
+[actions.connect]
+description = "Connect to selected session"
+command = "sesh connect '{strip_ansi|split: :1..|join: }'"
+mode = "execute"
+
+[actions.kill_session]
+description = "Kill selected tmux session (press Ctrl+r to reload)"
+command = "tmux kill-session -t '{strip_ansi|split: :1..|join: }'"
+mode = "fork"

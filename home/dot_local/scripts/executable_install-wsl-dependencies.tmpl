@@ -1,0 +1,71 @@
+{{ if eq (includeTemplate "is-wsl" .) "true" -}}
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+write_step() {
+    printf '\n==> %s\n' "$*"
+}
+
+apt_packages=(
+{{ range .packages.ubuntu.apt -}}
+    {{ . | quote }}
+{{ end -}}
+)
+
+native_path() {
+    # Keep Linux tools ahead of Windows shims. In particular, Mise's pipx backend
+    # must use /usr/bin/pipx, not the Windows Scoop pipx shim inherited by WSL.
+    printf '%s' "$HOME/.local/bin:$HOME/.local/scripts:$HOME/.local/share/mise/shims:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+}
+
+ensure_apt_packages() {
+    write_step "Installing Ubuntu packages"
+    sudo apt-get update
+    sudo apt-get install --yes "${apt_packages[@]}"
+    git lfs install
+}
+
+ensure_mise() {
+    if command -v mise >/dev/null 2>&1; then
+        return
+    fi
+
+    write_step "Installing Mise from its Ubuntu repository"
+    sudo extrepo enable mise
+    sudo apt-get update
+    sudo apt-get install --yes mise
+}
+
+ensure_mise_tools() {
+    write_step "Installing pinned Mise tools"
+    export PATH
+    PATH="$(native_path)"
+    mise --yes install
+}
+
+repair_xmlformatter() {
+    export PATH
+    PATH="$(native_path)"
+
+    if command -v xmlformat >/dev/null 2>&1; then
+        return
+    fi
+
+    write_step "Repairing xmlformatter Mise/pipx install"
+    mise install --force 'pipx:xmlformatter@0.2.9'
+}
+
+ensure_wsl_workspace_dirs() {
+    write_step "Ensuring WSL workspace directories"
+    mkdir -p "$HOME/src"
+}
+
+ensure_apt_packages
+ensure_mise
+ensure_mise_tools
+repair_xmlformatter
+ensure_wsl_workspace_dirs
+
+write_step "WSL dependencies are installed"
+{{ end -}}

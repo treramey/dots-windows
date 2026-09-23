@@ -1,0 +1,23 @@
+[metadata]
+name = "wt-search"
+description = "Find worktrees to create sessions with"
+requirements = ["git"]
+
+[ui]
+orientation = "portrait"
+
+[source]
+command = "git worktree list --porcelain | grep '^worktree' | cut -d' ' -f2-"
+display = "{split:/:-1..}"
+
+[preview]
+hidden = true
+command = "cd '{}' && git log --oneline -10 --color=always && echo && git status --short"
+
+[keybindings]
+enter = "actions:find-worktree-directory"
+
+[actions.find-worktree-directory]
+description = "Find worktree directory"
+command = "tv wt-sesh '{}'"
+mode = "execute"

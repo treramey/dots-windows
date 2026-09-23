@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Aspire AppHost SDK -->
+  <Sdk Name="Aspire.AppHost.Sdk" />
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <!-- Marks this project as an Aspire Host -->
+    <IsAspireHost>true</IsAspireHost>
+    <!-- Stores sensitive configuration -->
+    <UserSecretsId>aspire-myapp-apphost</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Aspire Hosting core package -->
+    <PackageReference Include="Aspire.Hosting.AppHost" />
+
+    <!-- PostgreSQL container support -->
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" />
+
+    <!-- Redis container support -->
+    <PackageReference Include="Aspire.Hosting.Redis" />
+
+    <!-- SQL Server container support (when needed) -->
+    <!-- <PackageReference Include="Aspire.Hosting.SqlServer" /> -->
+
+    <!-- MongoDB container support (when needed) -->
+    <!-- <PackageReference Include="Aspire.Hosting.MongoDB" /> -->
+
+    <!-- RabbitMQ container support (when needed) -->
+    <!-- <PackageReference Include="Aspire.Hosting.RabbitMQ" /> -->
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The API project being orchestrated -->
+    <ProjectReference Include="..\src\MyApp.Api\MyApp.Api.csproj" />
+
+    <!-- Add additional service projects here as needed -->
+    <!-- <ProjectReference Include="..\src\MyApp.Worker\MyApp.Worker.csproj" /> -->
+  </ItemGroup>
+
+</Project>

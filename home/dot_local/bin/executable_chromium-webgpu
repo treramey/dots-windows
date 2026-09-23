@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Run WebGPU in an isolated Chromium process because Vulkan currently breaks
+# video presentation in the normal Chromium profile on AMD Strix Halo.
+readonly webgpu_profile_dir="${XDG_DATA_HOME:-$HOME/.local/share}/chromium-webgpu-profile"
+readonly default_webgpu_url="https://vgpu.sh/"
+
+mkdir -p "$webgpu_profile_dir"
+
+if (( $# == 0 )); then
+  set -- "$default_webgpu_url"
+fi
+
+exec /usr/lib/chromium/chromium \
+  --user-data-dir="$webgpu_profile_dir" \
+  --ozone-platform=wayland \
+  --enable-unsafe-webgpu \
+  --enable-features=Vulkan \
+  --password-store=basic \
+  --no-first-run \
+  --no-default-browser-check \
+  "$@"

@@ -1,0 +1,51 @@
+[delta]
+	# Default only; ~/.cache/delta-features.gitconfig (written by the omarchy
+	# theme-set hook, included after this file) overrides it at runtime.
+	features = system-dark
+
+[delta "system-base"]
+	blame-palette = "#3b82f6" "#06b6d4" "#22c55e" "#f59e0b" "#a855f7"
+	commit-decoration-style = "#64748b" bold box ul
+	file-decoration-style = "#64748b"
+	file-style = "#2563eb" bold
+	hunk-header-decoration-style = "#64748b" box ul
+	hunk-header-file-style = "#2563eb" bold
+	hunk-header-line-number-style = "#64748b" bold
+	hunk-header-style = file line-number syntax
+	line-numbers-left-style = "#64748b"
+	line-numbers-right-style = "#64748b"
+	line-numbers-zero-style = "#64748b"
+	map-styles = \
+		bold purple => syntax "#a855f7", \
+		bold blue => syntax "#2563eb", \
+		bold cyan => syntax "#0891b2", \
+		bold yellow => syntax "#ca8a04"
+	syntax-theme = ansi
+
+[delta "system-light"]
+	features = system-base
+	light = true
+	line-numbers-minus-style = "#b91c1c" bold
+	line-numbers-plus-style = "#15803d" bold
+	minus-emph-style = "#7f1d1d" bold "#fecaca"
+	minus-empty-line-marker-style = "#b91c1c" "#fee2e2"
+	minus-non-emph-style = "#b91c1c" "#fee2e2"
+	minus-style = "#b91c1c" "#fee2e2"
+	plus-emph-style = "#14532d" bold "#bbf7d0"
+	plus-empty-line-marker-style = "#15803d" "#dcfce7"
+	plus-non-emph-style = "#15803d" "#dcfce7"
+	plus-style = "#15803d" "#dcfce7"
+
+[delta "system-dark"]
+	features = system-base
+	dark = true
+	line-numbers-minus-style = "#fecaca" bold
+	line-numbers-plus-style = "#bbf7d0" bold
+	minus-emph-style = "#fee2e2" bold "#991b1b"
+	minus-empty-line-marker-style = "#fecaca" "#7f1d1d"
+	minus-non-emph-style = "#fecaca" "#7f1d1d"
+	minus-style = "#fecaca" "#7f1d1d"
+	plus-emph-style = "#dcfce7" bold "#166534"
+	plus-empty-line-marker-style = "#bbf7d0" "#14532d"
+	plus-non-emph-style = "#bbf7d0" "#14532d"
+	plus-style = "#bbf7d0" "#14532d"

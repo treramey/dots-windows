@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Open nvim with a Snacks scratch buffer for a given filetype.
+# Usage: scratch [filetype]
+# Examples: scratch json, scratch xml, scratch yaml
+# Without args, defaults to markdown.
+
+ft="${1:-markdown}"
+exec nvim -c "lua Snacks.scratch.open({ ft = '$ft' })"

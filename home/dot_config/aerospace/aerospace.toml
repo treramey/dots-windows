@@ -1,0 +1,90 @@
+start-at-login = true
+automatically-unhide-macos-hidden-apps = true
+
+[gaps]
+inner.horizontal = 5
+inner.vertical = 5
+outer.left = 5
+outer.bottom = 5
+outer.top = 4
+outer.right = 5
+
+# Workspace 1 — Browser
+[[on-window-detected]]
+if.app-id = 'app.zen-browser.zen'
+run = 'move-node-to-workspace 1'
+
+[[on-window-detected]]
+if.app-id = 'com.google.Chrome'
+run = 'move-node-to-workspace 1'
+
+# Workspace 2 — Terminal
+[[on-window-detected]]
+if.app-id = 'com.mitchellh.ghostty'
+run = 'move-node-to-workspace 2'
+
+# Workspace 3 — Editors / IDEs
+[[on-window-detected]]
+if.app-id = 'com.microsoft.VSCode'
+run = 'move-node-to-workspace 3'
+
+[[on-window-detected]]
+if.app-id = 'dev.zed.Zed'
+run = 'move-node-to-workspace 3'
+
+[[on-window-detected]]
+if.app-id = 'com.jetbrains.rider'
+run = 'move-node-to-workspace 3'
+
+# Workspace 4 — DB tools
+[[on-window-detected]]
+if.app-id = 'com.jetbrains.datagrip'
+run = 'move-node-to-workspace 4'
+
+# Workspace 5 — Comms
+[[on-window-detected]]
+if.app-id = 'app.legcord.Legcord'
+run = 'move-node-to-workspace 5'
+
+[[on-window-detected]]
+if.app-id = 'com.microsoft.Outlook'
+run = 'move-node-to-workspace 5'
+
+[[on-window-detected]]
+if.app-id = 'com.microsoft.teams2'
+run = 'move-node-to-workspace 5'
+
+# Workspace 6 — Music
+[[on-window-detected]]
+if.app-id = 'com.spotify.client'
+run = 'move-node-to-workspace 6'
+
+# Floating
+[[on-window-detected]]
+if.app-id = 'com.apple.Notes'
+run = 'layout floating'
+
+[[on-window-detected]]
+if.app-id = 'com.electron.wispr-flow'
+run = 'layout floating'
+
+[mode.main.binding]
+alt-cmd-ctrl-shift-1 = 'workspace 1'
+alt-cmd-ctrl-shift-2 = 'workspace 2'
+alt-cmd-ctrl-shift-3 = 'workspace 3'
+alt-cmd-ctrl-shift-4 = 'workspace 4'
+alt-cmd-ctrl-shift-5 = 'workspace 5'
+alt-cmd-ctrl-shift-6 = 'workspace 6'
+alt-cmd-ctrl-shift-semicolon = 'mode service'
+
+[mode.service.binding]
+esc = 'mode main'
+r = ['reload-config', 'mode main']
+f = ['fullscreen', 'mode main']
+backspace = ['close-all-windows-but-current', 'mode main']
+1 = ['move-node-to-workspace 1', 'mode main']
+2 = ['move-node-to-workspace 2', 'mode main']
+3 = ['move-node-to-workspace 3', 'mode main']
+4 = ['move-node-to-workspace 4', 'mode main']
+5 = ['move-node-to-workspace 5', 'mode main']
+6 = ['move-node-to-workspace 6', 'mode main']

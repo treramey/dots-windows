@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+message() {
+  if [[ -n "${TMUX:-}" ]] && command -v tmux >/dev/null 2>&1; then
+    tmux display-message -d 3000 "$*"
+  else
+    printf '%s\n' "$*" >&2
+  fi
+}
+
+if [[ $# -ne 1 || -z "${1:-}" ]]; then
+  message "Usage: tmux-ssh-session <ssh-host>"
+  exit 1
+fi
+
+host="$1"
+
+if ! command -v tmux >/dev/null 2>&1; then
+  printf 'tmux-ssh-session: tmux not found\n' >&2
+  exit 1
+fi
+
+if ! command -v ssh >/dev/null 2>&1; then
+  message "ssh not found"
+  exit 1
+fi
+
+if ! command -v mosh >/dev/null 2>&1; then
+  message "mosh not found"
+  exit 1
+fi
+
+# Keep tmux session names simple, predictable, and easy to spot in session lists.
+safe_host="${host//[^A-Za-z0-9_.-]/-}"
+session="MOSH-${safe_host}"
+printf -v host_arg '%q' "$host"
+
+if tmux has-session -t "=$session" 2>/dev/null; then
+  message "Switching to Mosh session: $session"
+  tmux switch-client -t "=$session"
+else
+  message "Creating Mosh session: $session"
+  tmux new-session -d -s "$session" -n "$host" "exec mosh -- $host_arg"
+  tmux switch-client -t "=$session"
+fi

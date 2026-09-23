@@ -1,0 +1,439 @@
+#!/usr/bin/env bash
+# tv-wt backs the "wt-projects" and "wt-worktrees" Television channels.
+# Television runs it once to produce a channel's source lines, again for every
+# preview it draws, and a final time for whichever action the user chose. Each
+# subcommand in the dispatch at the bottom of this file serves one of those.
+#
+# Paths travel between those runs base64-encoded. Television interpolates the
+# fields of a source line straight into the shell command it builds for a
+# preview or an action, so an unencoded path holding a space or a quote would be
+# re-split or would end the quoting early. Encoding avoids the question.
+set -euo pipefail
+
+# Decode a path that Television handed back to us from one of our source lines.
+decode() { printf '%s' "$1" | base64 --decode; }
+
+# An awk prelude defining b64(), used by the two encoders below.
+#
+# The obvious implementation calls base64(1) once per path. That costs two
+# processes per repository, and at a hundred-odd repositories it was the single
+# most expensive thing this script did, outweighing every Git operation put
+# together. Spelling base64 out in awk keeps the whole encode to one process.
+#
+# Both encoders run under LC_ALL=C, which is load-bearing. It makes awk index
+# bytes rather than characters, so length() and substr() operate on the same
+# units base64 is defined over and a path containing non-ASCII encodes
+# byte-for-byte the same as base64(1).
+#
+# The unset entries of value[] are what pad a final group of one or two bytes:
+# substr() past the end of a string returns "", which indexes nothing, and awk
+# reads that as zero.
+b64_awk='
+  function b64(s,   i, n, out, b1, b2, b3) {
+    n = length(s)
+    out = ""
+    for (i = 1; i <= n; i += 3) {
+      b1 = value[substr(s, i, 1)]
+      b2 = value[substr(s, i + 1, 1)]
+      b3 = value[substr(s, i + 2, 1)]
+      out = out substr(alphabet, int(b1 / 4) + 1, 1)
+      out = out substr(alphabet, (b1 % 4) * 16 + int(b2 / 16) + 1, 1)
+      out = out (i + 1 <= n ? substr(alphabet, (b2 % 16) * 4 + int(b3 / 64) + 1, 1) : "=")
+      out = out (i + 2 <= n ? substr(alphabet, b3 % 64 + 1, 1) : "=")
+    }
+    return out
+  }
+  BEGIN {
+    alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+    for (i = 0; i < 256; i++) value[sprintf("%c", i)] = i
+  }
+'
+
+# Read newline-separated paths on stdin and write "<encoded>\t<display>" for
+# each, where <encoded> is the base64 of the path and <display> is that same
+# path with $HOME shortened to "~".
+encode_paths() {
+  LC_ALL=C awk -v home="$HOME" "$b64_awk"'
+    {
+      display = (index($0, home) == 1) ? "~" substr($0, length(home) + 1) : $0
+      print b64($0) "\t" display
+
+      # awk block-buffers when its output is a pipe, which is exactly what it is
+      # here. Without this the encoded lines would sit in that buffer until it
+      # filled or the process exited, undoing the incremental writes that
+      # projects() goes out of its way to make.
+      fflush()
+    }
+  '
+}
+
+# Read "<path>\t<branch>\t<display>" on stdin and write the same three fields
+# with the first two base64-encoded, which is the shape the wt-worktrees channel
+# reads: two fields for its preview and actions to decode, one to show.
+encode_worktrees() {
+  LC_ALL=C awk -F '\t' "$b64_awk"'
+    {
+      print b64($1) "\t" b64($2) "\t" $3
+      fflush()
+    }
+  '
+}
+
+# Report whether a directory holds a repository's internals.
+#
+# These are the three markers Git itself looks for when deciding whether a
+# directory is a Git directory. Checking them matters because an abandoned tree
+# often leaves behind a partial `.git` directory with objects and refs but no
+# HEAD. Git walks straight past those and keeps searching upward, and so must
+# we, or they surface as repositories that no Git command will accept.
+is_git_dir() { [[ -f $1/HEAD && -d $1/objects && -d $1/refs ]]; }
+
+# Resolve a directory to the Git common directory it belongs to and report the
+# answer in REPLY. Return non-zero when the directory is in no repository.
+#
+# The common directory is what identifies a repository here. Every linked
+# worktree of a repository shares one, so it is the key that collapses a list of
+# worktrees back into a list of repositories.
+#
+# `git rev-parse --git-common-dir` answers this outright, but zoxide hands us
+# hundreds of directories and a process apiece is far too slow, so we walk up
+# the tree ourselves. Three layouts have to be recognised:
+#
+#   - An ordinary checkout has a `.git` directory, which is the common directory.
+#   - A linked worktree has a `.git` file reading "gitdir: <common>/worktrees/
+#     <name>". Trimming that suffix leaves the common directory.
+#   - A bare repository has no `.git` at all and is known by its layout.
+#
+# REPLY comes back spelled however the caller spelled its argument, which on a
+# case-insensitive filesystem is not unique. A caller treating it as an identity
+# has to canonicalise it first.
+common_dir() {
+  local dir=$1 pointer
+  while [[ -n $dir ]]; do
+    # Nearly every directory we walk through holds no repository, so settle that
+    # case in two stats and only look closer once something is actually there.
+    if [[ -e $dir/.git ]]; then
+      if [[ -f $dir/.git ]]; then
+        IFS= read -r pointer <"$dir/.git" || return 1
+        [[ $pointer == 'gitdir: '* ]] || return 1
+        pointer=${pointer#gitdir: }
+        if [[ $pointer == */worktrees/* ]]; then
+          pointer=${pointer%/worktrees/*}
+        fi
+        # The gitdir of a repository root is often relative, as in
+        # "gitdir: ./.bare". It has to be resolved, because that relative
+        # spelling is a different string from the absolute one every linked
+        # worktree reports, and the two would split one repository into two.
+        if [[ $pointer != /* ]]; then
+          pointer=$(realpath -- "$dir/$pointer" 2>/dev/null) || return 1
+        fi
+        is_git_dir "$pointer" || return 1
+        REPLY=$pointer
+        return 0
+      fi
+      if is_git_dir "$dir/.git"; then
+        REPLY=$dir/.git
+        return 0
+      fi
+    elif [[ -f $dir/HEAD ]] && is_git_dir "$dir"; then
+      REPLY=$dir
+      return 0
+    fi
+    dir=${dir%/*}
+  done
+  return 1
+}
+
+# Write the source lines for the wt-projects channel, one per repository, most
+# recently used first.
+#
+# Zoxide keeps a flat list of directories, and one repository usually appears in
+# it many times over: once for the repository itself, once for each of its
+# linked worktrees, and once more for whatever subdirectories have been visited.
+# Collapsing that back into a list of repositories is this function's whole job.
+#
+# Repositories are written the moment they are recognised rather than gathered
+# up and written at the end, because Television draws its list as the lines
+# arrive. Emitting incrementally puts the first rows on screen in about thirty
+# milliseconds rather than holding everything back until the last of several
+# hundred directories has been examined. Zoxide hands us its entries in frecency
+# order, so the rows most likely to be wanted are also the first ones drawn.
+projects() {
+  local candidate common lower primary here there
+  local -A seen=() spelling=()
+
+  while IFS= read -r candidate; do
+    [[ -d $candidate ]] || continue
+    common_dir "$candidate" || continue
+    common=$REPLY
+    [[ -z ${seen[$common]:-} ]] || continue
+    seen[$common]=1
+
+    # A case-insensitive filesystem resolves both `PayNow` and `paynow`, so one
+    # repository can arrive here under two spellings that no string comparison
+    # will match. Folding the case is a cheap signal that two spellings might be
+    # the same repository, and realpath then settles it. That process is worth
+    # paying for because a collision happens a handful of times rather than once
+    # per directory. On a case-sensitive filesystem the two spellings really are
+    # different repositories, and realpath says so.
+    lower=${common,,}
+    if [[ -n ${spelling[$lower]:-} ]]; then
+      here=$(realpath -- "$common" 2>/dev/null) || here=$common
+      there=$(realpath -- "${spelling[$lower]}" 2>/dev/null) || there=${spelling[$lower]}
+      if [[ $here == "$there" ]]; then
+        continue
+      fi
+    else
+      spelling[$lower]=$common
+    fi
+
+    # Name the repository after the directory holding its storage rather than
+    # the storage itself, so a container repository reads as "LAAIR.VIN" instead
+    # of "LAAIR.VIN/.bare".
+    #
+    # A container only earns that shorter name when it is a Git context in its
+    # own right, since it is the path we go on to hand to git and to `wt`. Some
+    # containers hold a `.bare` directory and nothing else, and those have to
+    # keep the longer name to stay usable.
+    case $common in
+      */.git) primary=${common%/.git} ;;
+      */.bare)
+        primary=${common%/.bare}
+        [[ -e $primary/.git ]] || primary=$common
+        ;;
+      *) primary=$common ;;
+    esac
+    [[ -d $primary ]] || primary=$common
+
+    printf '%s\n' "$primary"
+  done < <(zoxide query -l) | encode_paths
+}
+
+# Print a directory of the repository that has a working tree, or print nothing
+# when the repository has none.
+#
+# A container repository is bare, meaning its storage holds no checkout of its
+# own and every checkout lives in a linked worktree. `git status` refuses to run
+# against such a repository, so a preview borrows the first live worktree.
+work_tree() {
+  local repo=$1 path
+  if [[ $(git -C "$repo" rev-parse --is-bare-repository 2>/dev/null) == false ]]; then
+    printf '%s\n' "$repo"
+    return 0
+  fi
+
+  # `git worktree list --porcelain` writes one blank-line-separated record per
+  # worktree and marks a bare one with a lone "bare" line.
+  while IFS= read -r path; do
+    # A worktree stays registered after its directory is deleted, so the first
+    # entry Git reports is not necessarily one that still exists.
+    [[ -d $path ]] || continue
+    printf '%s\n' "$path"
+    return 0
+  done < <(git -C "$repo" worktree list --porcelain 2>/dev/null | awk '
+    /^worktree / { path = substr($0, 10); bare = 0; next }
+    /^bare$/     { bare = 1 }
+    /^$/         { if (path != "" && !bare) print path; path = "" }
+    END          { if (path != "" && !bare) print path }
+  ')
+}
+
+# Preview for the wt-projects channel: the status of a checkout, the
+# repository's worktrees, and its recent history.
+project_preview() {
+  local repo tree
+  repo=$(decode "$1")
+  tree=$(work_tree "$repo")
+  if [[ -z $tree ]]; then
+    printf 'Bare repository - no checkout to report status from.\n'
+  else
+    [[ $tree == "$repo" ]] || printf 'Status of %s\n' "${tree/#$HOME/\~}"
+    git -C "$tree" -c color.status=always status --short --branch
+  fi
+  # `wt -C "$repo" list` is the richer answer, but a preview is redrawn on every
+  # keystroke and every move of the cursor, and on a large repository with many
+  # worktrees that call takes seconds - see worktrees() below. Git's plain list
+  # is the same set of worktrees in milliseconds.
+  printf '\nWorktrees:\n'
+  git -C "$repo" worktree list 2>/dev/null || true
+  printf '\nRecent commits:\n'
+  git -C "$repo" log --oneline --decorate --color=always -10 2>/dev/null ||
+    printf 'No commits yet.\n'
+}
+
+# Write one "<path>\t<branch>" line per live worktree of the repository the
+# current directory is in - the set the wt-worktrees channel offers, and the
+# set browse() counts when deciding whether that channel has anything to ask.
+#
+# `git worktree list --porcelain` writes a blank-line-terminated record per
+# worktree: its path, its HEAD, its branch if it is on one, and a lone "bare"
+# line for the storage of a container repository. The extra blank line closes
+# the last record if some future Git stops doing so itself; an empty record is
+# dropped along with every other row that has no path.
+#
+# A worktree stays registered after its directory is deleted, and a detached
+# one has no branch to hand to `wt switch` or `wt remove`, so neither belongs
+# in a list whose every action names a branch.
+live_worktrees() {
+  local line path= branch= bare=0
+  {
+    while IFS= read -r line; do
+      case $line in
+        'worktree '*)
+          path=${line#worktree }
+          branch=
+          bare=0
+          ;;
+        'branch refs/heads/'*) branch=${line#branch refs/heads/} ;;
+        bare) bare=1 ;;
+        '')
+          if [[ -n $path && -n $branch && $bare -eq 0 && -d $path ]]; then
+            printf '%s\t%s\n' "$path" "$branch"
+          fi
+          path=
+          branch=
+          bare=0
+          ;;
+      esac
+    done
+  } < <(
+    git worktree list --porcelain 2>/dev/null
+    printf '\n'
+  )
+}
+
+# Hand the chosen repository off to the wt-worktrees channel. Television is
+# replaced rather than nested, so backing out of that channel leaves the shell
+# where it started.
+#
+# A repository with one live worktree - which is every ordinary checkout that
+# never grew a linked worktree - would offer a list of one, and a repository
+# with none would offer an empty list. Neither is a decision, so both skip the
+# channel and open the only thing there is to open.
+browse() {
+  local repo path branch count=0 only=
+  repo=$(decode "$1")
+  cd "$repo"
+
+  while IFS=$'\t' read -r path branch; do
+    count=$((count + 1))
+    only=$path
+  done < <(live_worktrees)
+
+  if [[ $count -gt 1 ]]; then
+    exec tv wt-worktrees "$repo"
+  fi
+  open_path "${only:-$repo}"
+}
+
+# Write the source lines for the wt-worktrees channel, one per worktree of the
+# repository we were launched in, main first and then in registration order.
+#
+# `wt list --format=json` answers this in one call and was what this used to
+# read, but it answers far more than a list: for every worktree it diffs the
+# working tree and merge-tests the branch against main, which on a repository of
+# twenty-odd worktrees over a large checkout took thirteen seconds - all of it
+# spent before Television could draw its first row. `git worktree list` is the
+# same list in forty milliseconds, and the three things this channel shows - the
+# branch, the path, and a marker - are all it needs. Worktrunk still performs
+# every action the channel offers; it just no longer gates the list on work the
+# list does not display.
+worktrees() {
+  local default_branch path branch marker
+
+  # The "^" marker needs the repository's default branch. origin/HEAD is a local
+  # ref, so reading it costs nothing. Worktrunk answers for a repository that has
+  # no remote, and caches its answer; failing both, no row is marked as main.
+  if default_branch=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null); then
+    default_branch=${default_branch#*/}
+  else
+    default_branch=$(wt config state default-branch get 2>/dev/null) || default_branch=
+  fi
+
+  while IFS=$'\t' read -r path branch; do
+    if [[ $PWD == "$path" || $PWD == "$path"/* ]]; then
+      marker='@  '
+    elif [[ -n $default_branch && $branch == "$default_branch" ]]; then
+      marker='^  '
+    else
+      marker='+  '
+    fi
+    printf '%s\t%s\t%s%s  ·  %s\n' "$path" "$branch" "$marker" "$branch" "$path"
+  done < <(live_worktrees) | encode_worktrees
+}
+
+# Preview for the wt-worktrees channel. Every worktree listed there is a real
+# checkout, so status can be read from the worktree itself.
+preview() {
+  local path branch
+  path=$(decode "$1")
+  branch=$(decode "$2")
+  git -C "$path" -c color.status=always status --short --branch
+  printf '\nRecent commits:\n'
+  git -C "$path" log --oneline --decorate --color=always -10 2>/dev/null ||
+    printf 'No commits yet.\n'
+  printf '\nBranch: %s\nPath: %s\n' "$branch" "$path"
+}
+
+# Open the selected worktree.
+#
+# Under Herdr a worktree belongs in a space of its own rather than in the pane
+# this picker was drawn in, so ask Herdr for one. `herdr worktree open` focuses
+# the space already showing the worktree if there is one, and otherwise makes it.
+#
+# Herdr requires the request to come from the repository's workspace rather than
+# from one of its linked worktrees, so it is handed the repository root, worked
+# out the same way projects() names a repository. Anything unexpected - no Herdr
+# session, a socket that has gone away, a path Herdr will not open - falls
+# through to a shell in the pane, which is what this did before Herdr.
+open_path() {
+  local path=$1 common root
+
+  if [[ ${HERDR_ENV:-} == 1 && -S ${HERDR_SOCKET_PATH:-/nonexistent} ]]; then
+    if common=$(git -C "$path" rev-parse --path-format=absolute --git-common-dir 2>/dev/null); then
+      root=${common%/.git}
+      root=${root%/.bare}
+      [[ -d $root ]] || root=$common
+      if herdr worktree open --cwd "$root" --path "$path" --focus >/dev/null 2>&1; then
+        return 0
+      fi
+    fi
+  fi
+
+  cd "$path"
+  exec "${SHELL:-/bin/sh}" -l
+}
+
+open_shell() {
+  open_path "$(decode "$1")"
+}
+
+# Switch to the selected worktree through Worktrunk, which runs its own hooks
+# and then leaves us in a shell there.
+switch_worktree() {
+  local branch
+  branch=$(decode "$1")
+  exec wt switch "$branch" -x "${SHELL:-/bin/sh}"
+}
+
+# Remove the selected worktree through Worktrunk, in the foreground so its
+# prompts reach the terminal Television was drawing over.
+remove_worktree() {
+  local branch
+  branch=$(decode "$1")
+  exec wt remove --foreground "$branch"
+}
+
+# One subcommand per way Television invokes us. Called with no arguments, we are
+# being run as a command rather than by a channel, so open the channel instead.
+case ${1:-} in
+  --projects) projects ;;
+  --project-preview) project_preview "$2" ;;
+  --browse) browse "$2" ;;
+  --worktrees) worktrees ;;
+  --preview) preview "$2" "$3" ;;
+  --shell) open_shell "$2" ;;
+  --switch) switch_worktree "$2" ;;
+  --remove) remove_worktree "$2" ;;
+  *) exec tv wt-projects ;;
+esac

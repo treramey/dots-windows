@@ -1,0 +1,51 @@
+#!/usr/bin/env zsh
+# Automate tmux session cleanup every X hours using a LaunchAgent
+# This will create plist file to run the script every X hours
+# and log output/errors to /tmp/$PLIST_LABEL.out and /tmp/$PLIST_LABEL.err
+# NOTE: If you modify the INTERVAL_SEC below, make sure to also change it in
+# the ~/.local/scripts/tmux-kill-sessions script
+#
+# 1 hour = 3600 s
+INTERVAL_SEC=7200
+PLIST_ID="tmux-kill-sessions"
+PLIST_NAME="com.linkarzu.$PLIST_ID.plist"
+PLIST_LABEL="${PLIST_NAME%.plist}"
+PLIST_PATH="$HOME/Library/LaunchAgents/$PLIST_NAME"
+SCRIPT_PATH="$HOME/.local/scripts/$PLIST_ID"
+
+# Ensure the script file exists
+if [ ! -f "$SCRIPT_PATH" ]; then
+  echo "Error: $SCRIPT_PATH does not exist."
+else
+  # If the PLIST file does not exist, create it
+  if [ ! -f "$PLIST_PATH" ]; then
+    echo "Creating $PLIST_PATH..."
+    cat <<EOF >"$PLIST_PATH"
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>$PLIST_LABEL</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>$SCRIPT_PATH</string>
+    </array>
+    <key>StartInterval</key>
+    <integer>$INTERVAL_SEC</integer>
+    <key>StandardOutPath</key>
+    <string>/tmp/$PLIST_ID.out</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/$PLIST_ID.err</string>
+</dict>
+</plist>
+EOF
+  fi
+fi
+
+# Check if the plist is loaded, and load it if not
+if ! launchctl list | grep -q "$PLIST_LABEL"; then
+  echo "Loading $PLIST_PATH..."
+  launchctl load "$PLIST_PATH"
+  echo "$PLIST_PATH loaded."
+fi

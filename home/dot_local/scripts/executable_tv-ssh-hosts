@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Print SSH connection names for Television.
+# Source: Host aliases from ~/.ssh/config and simple Include files only.
+# Output is intentionally one safe token per line so it can be passed to ssh/mosh.
+
+message() {
+  if [[ -n "${TMUX:-}" ]] && command -v tmux >/dev/null 2>&1; then
+    tmux display-message -d 3000 "$*"
+  else
+    printf '%s\n' "$*" >&2
+  fi
+}
+
+emit_config_hosts() {
+  local -a files=()
+  local config_file="${HOME}/.ssh/config"
+
+  [[ -f "$config_file" ]] && files+=("$config_file")
+
+  # Support common/simple Include directives in ~/.ssh/config.
+  # This is deliberately conservative; ssh itself handles all edge cases at connect time.
+  if [[ -f "$config_file" ]]; then
+    while IFS= read -r include_path; do
+      [[ -z "$include_path" ]] && continue
+      include_path="${include_path/#\~/$HOME}"
+      # shellcheck disable=SC2086 # intentional glob expansion for Include paths
+      for file in $include_path; do
+        [[ -f "$file" ]] && files+=("$file")
+      done
+    done < <(awk 'tolower($1) == "include" { for (i = 2; i <= NF; i++) print $i }' "$config_file")
+  fi
+
+  if ((${#files[@]} == 0)); then
+    message "No SSH config found at ~/.ssh/config"
+    return 0
+  fi
+
+  awk '
+    BEGIN { IGNORECASE = 1 }
+    $1 == "Host" {
+      for (i = 2; i <= NF; i++) {
+        host = $i
+        # Skip negated and wildcard/template entries, e.g.:
+        #   Host *
+        #   Host github-*
+        #   Host *.internal
+        if (host ~ /^!/ || host ~ /[?*]/) next
+        print host
+      }
+    }
+  ' "${files[@]}"
+}
+
+filter_excluded_hosts() {
+  local exclude_file="${XDG_CONFIG_HOME:-$HOME/.config}/television/ssh-exclude"
+
+  if [[ -f "$exclude_file" ]]; then
+    awk '
+      FNR == NR {
+        if ($0 !~ /^[[:space:]]*($|#)/) exclude[$1] = 1
+        next
+      }
+      !($0 in exclude)
+    ' "$exclude_file" -
+  else
+    cat
+  fi
+}
+
+hosts=$(emit_config_hosts | awk '/^[A-Za-z0-9_.@-]+$/ { print }' | filter_excluded_hosts | sort -fu)
+
+if [[ -z "$hosts" ]]; then
+  message "No SSH hosts found for tv ssh"
+  exit 0
+fi
+
+printf '%s\n' "$hosts"

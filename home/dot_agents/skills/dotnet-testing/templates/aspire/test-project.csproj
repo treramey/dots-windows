@@ -1,0 +1,53 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- .NET Aspire Testing core -->
+    <PackageReference Include="Aspire.Hosting.Testing" />
+
+    <!-- Test framework -->
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+
+    <!-- ASP.NET Core test support -->
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+
+    <!-- Assertions -->
+    <PackageReference Include="AwesomeAssertions" />
+
+    <!-- URL helpers -->
+    <PackageReference Include="Flurl.Http" />
+
+    <!-- Database testing -->
+    <PackageReference Include="Npgsql" />
+    <PackageReference Include="Respawn" />
+
+    <!-- Redis testing (when needed) -->
+    <PackageReference Include="StackExchange.Redis" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Reference to the AppHost project -->
+    <ProjectReference Include="..\..\MyApp.AppHost\MyApp.AppHost.csproj" />
+
+    <!-- Reference application projects to access DTOs etc. -->
+    <ProjectReference Include="..\..\src\MyApp.Application\MyApp.Application.csproj" />
+    <ProjectReference Include="..\..\src\MyApp.Domain\MyApp.Domain.csproj" />
+  </ItemGroup>
+
+  <!-- SQL script configuration (when using external SQL files) -->
+  <ItemGroup>
+    <None Update="SqlScripts\**\*.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

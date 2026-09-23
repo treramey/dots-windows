@@ -1,0 +1,110 @@
+{{ if eq .chezmoi.os "darwin" }}
+# Omarchy hooks are Linux-only; without this chezmoi creates ~/.config/omarchy on macOS.
+.config/omarchy
+{{ end }}
+
+{{ if ne (includeTemplate "is-wsl" .) "true" }}
+# WSL login shells need Mise shims before Neovide asks WSL to locate Neovim.
+.profile
+.local/bin/wslview
+.local/bin/bitwarden-ssh-agent-bridge
+.config/systemd/user/bitwarden-ssh-agent-bridge.service
+10-provision-wsl.sh
+{{ end }}
+
+{{ if eq .chezmoi.os "windows" }}
+# The existing .config and .local trees configure POSIX applications and
+# macOS/Linux desktop tooling. Development tools and Neovim run inside WSL.
+.config
+.config/**
+# Native Windows tools read these configurations from %USERPROFILE%\.config.
+!.config
+!.config/git
+!.config/git/**
+!.config/wezterm
+!.config/wezterm/**
+!.config/ohmyposh
+!.config/ohmyposh/**
+.local
+.local/**
+# Keep the native PowerShell port of dmmulroy's agent-repos command.
+!.local/
+!.local/bin/
+!.local/bin/agent-repos.ps1
+{{ end }}
+
+{{ if ne .chezmoi.os "darwin" }}
+.config/aerospace
+.config/skhd
+.config/borders
+.config/karabiner
+.config/svim
+.config/spicetify
+.config/spotify_player
+.config/NuGet
+.config/fmdt
+{{ end }}
+
+.config/fish/fish_variables
+# Fisher-managed plugin files (plugin-git, fzf.fish)
+.config/fish/conf.d/fzf.fish
+.config/fish/conf.d/git.fish
+.config/fish/functions/__git.*.fish
+.config/fish/functions/gbage.fish
+.config/fish/functions/gbda.fish
+.config/fish/functions/gdv.fish
+.config/fish/functions/gignored.fish
+.config/fish/functions/glp.fish
+.config/fish/functions/grename.fish
+.config/fish/functions/grt.fish
+.config/fish/functions/gtest.fish
+.config/fish/functions/gtl.fish
+.config/fish/functions/gunwip.fish
+.config/fish/functions/gwip.fish
+.config/fish/functions/_fzf_*.fish
+.config/fish/functions/fzf_configure_bindings.fish
+.config/fish/completions/fzf_configure_bindings.fish
+.config/nvim/.undodir
+.config/nvim/.luarc.json
+.config/opencode/node_modules
+.config/opencode/*.bak
+# Live workspaces: these are symlinked into ~/.dotfiles and edited in-place.
+# Chezmoi should not copy/apply them as normal managed trees.
+# Pi is the exception on Windows, where we want chezmoi to materialize ~/.pi.
+{{ if ne .chezmoi.os "windows" }}
+.pi
+.pi/**
+{{ end }}
+.agents
+.agents/**
+.config/nvim
+.config/nvim/**
+.claude/skills/code-review-workspace
+
+{{ if eq .chezmoi.os "windows" }}
+# Pi runtime state on Windows; mirrors the root .gitignore rules for dot_pi.
+.pi/node_modules
+.pi/node_modules/**
+.pi/agent/extensions/**/node_modules
+.pi/agent/extensions/**/node_modules/**
+.pi/archive
+.pi/archive/**
+.pi/chrome-cdp-profile
+.pi/chrome-cdp-profile/**
+.pi/web-search-cache
+.pi/web-search-cache/**
+.pi/todos
+.pi/todos/**
+.pi/semantic-grep.sqlite
+{{ end }}
+
+{{ if ne .chezmoi.os "windows" }}
+# These paths use Windows' native per-user locations.
+AppData
+AppData/**
+Documents/PowerShell
+Documents/PowerShell/**
+# The OneDrive profile link only exists on the work Windows host.
+OneDrive - Cinemark Holdings, Inc
+OneDrive - Cinemark Holdings, Inc/**
+{{ end }}

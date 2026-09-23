@@ -1,0 +1,211 @@
+onboarding = false
+
+[terminal]
+# Use Fish while preserving login shell behavior.
+default_shell = "pwsh.exe"
+shell_mode = "auto"
+
+[update]
+channel = "stable"
+
+[keys]
+# Prefix: C-Space
+prefix = "ctrl+space"
+
+# Basics.
+help = "prefix+?"
+# Keep prefix+shift+s available for workspace picking.
+settings = "prefix+shift+comma"
+detach = ["prefix+d", "prefix+q"]
+reload_config = "prefix+r"
+goto = "prefix+s"
+
+# Workspace controls:
+#   prefix+shift+s choose workspace
+#   prefix+w       also open workspace navigation (Herdr default muscle memory)
+#   prefix+shift+w rename workspace (avoids symbol-layer gymnastics)
+#   prefix+( / )   previous / next workspace
+workspace_picker = ["prefix+shift+s", "prefix+w"]
+new_workspace = "prefix+shift+n"
+rename_workspace = "prefix+shift+w"
+close_workspace = "prefix+shift+d"
+previous_workspace = "prefix+("
+next_workspace = "prefix+)"
+
+# Agents.
+focus_agent = "prefix+alt+1..9"
+
+# Tab controls.
+new_tab = "prefix+c"
+previous_tab = "prefix+p"
+next_tab = "prefix+n"
+switch_tab = "prefix+1..9"
+rename_tab = "prefix+comma"
+close_tab = "prefix+shift+x"
+
+# Pane creation (matching Omarchy/tmux muscle memory).
+split_vertical = "prefix+v"
+split_horizontal = "prefix+h"
+close_pane = "prefix+x"
+zoom = "prefix+m"
+copy_mode = "prefix+y"
+
+# Pane resize mode.
+resize_mode = "prefix+shift+r"
+
+# Pane navigation; ctrl+h/j/k/l are direct Herdr chords.
+focus_pane_left = ["ctrl+h"]
+focus_pane_down = ["ctrl+j"]
+focus_pane_up = ["ctrl+k"]
+focus_pane_right = ["ctrl+l"]
+cycle_pane_next = "prefix+tab"
+cycle_pane_previous = "prefix+shift+tab"
+
+# Keep last-pane navigation available while reserving prefix+l for the
+# Sesh-style previous workspace action on Windows.
+last_pane = {{ if eq .chezmoi.os "windows" }}"prefix+shift+l"{{ else }}"prefix+l"{{ end }}
+
+# Keep Herdr's dashboard/sidebar available, but not on prefix+b since C-b is not the prefix here.
+toggle_sidebar = "prefix+b"
+
+# Navigate-mode movement. Scalar [keys] settings must appear before the first
+# [[keys.command]] table so TOML does not attach them to a command.
+navigate_workspace_up = "up"
+navigate_workspace_down = "down"
+navigate_pane_left = "h"
+navigate_pane_down = "j"
+navigate_pane_up = "k"
+navigate_pane_right = "l"
+
+# Herdr Annotate: terminal comments, document review, and agent feedback.
+open_notification_target = "prefix+i"
+
+[[keys.command]]
+key = "prefix+a"
+type = "plugin_action"
+command = "annotate.capture"
+description = "Annotate selected terminal text"
+
+[[keys.command]]
+key = "prefix+shift+a"
+type = "plugin_action"
+command = "annotate.copy-context"
+description = "Copy annotations as agent context"
+
+# prefix+m remains pane zoom.
+[[keys.command]]
+key = "prefix+shift+m"
+type = "plugin_action"
+command = "annotate.manage"
+description = "Manage annotations"
+
+[[keys.command]]
+key = "prefix+o"
+type = "plugin_action"
+command = "annotate.open"
+description = "Review documents in the current folder"
+
+[[keys.command]]
+key = "prefix+shift+o"
+type = "plugin_action"
+command = "annotate.last"
+description = "Review the agent's last reply"
+
+# Native Windows Sesh-style workspace picker. The plugin combines active
+# Herdr workspaces, configured Sesh sessions, and zoxide directories.
+{{ if eq .chezmoi.os "windows" }}
+[[keys.command]]
+key = "prefix+f"
+type = "plugin_action"
+command = "treramey.sesh-windows.open-picker"
+description = "open Sesh workspace picker"
+
+[[keys.command]]
+key = "prefix+l"
+type = "plugin_action"
+command = "treramey.sesh-windows.last"
+description = "switch to previous Sesh workspace"
+{{ end }}
+
+# Search existing Herdr workspaces and zoxide directories in one Television
+# picker. Selecting a directory creates and focuses a workspace for it.
+[[keys.command]]
+key = "ctrl+f"
+type = {{ if eq .chezmoi.os "windows" }}"plugin_action"{{ else }}"pane"{{ end }}
+command = {{ if eq .chezmoi.os "windows" }}"treramey.sesh-windows.open-picker"{{ else }}"PATH=\"$HOME/.local/scripts:$PATH\" herdr-tv"{{ end }}
+description = "switch or create workspace"
+
+[[keys.command]]
+key = "prefix+g"
+type = "pane"
+command = {{ if eq .chezmoi.os "windows" }}"set SSH_AUTH_SOCK=&& lazygit"{{ else }}"lazygit"{{ end }}
+description = "open lazygit"
+
+# Open a 50:50 code workspace: Pi in the focused pane and Neovim to its right.
+[[keys.command]]
+key = "prefix+shift+e"
+type = "shell"
+command = "~/.local/bin/herdr-pi-nvim-layout"
+description = "Pi/Neovim code layout (50:50)"
+
+# Override Herdr's built-in "new worktree" key with the Worktrunk plugin's
+# switch/create picker.
+[[keys.command]]
+key = "prefix+shift+g"
+type = "plugin_action"
+command = "worktrunk.open"
+description = "Worktree: switch / create"
+
+[[keys.command]]
+# Avoid colliding with keys.close_workspace (prefix+shift+d).
+key = "prefix+shift+backspace"
+type = "plugin_action"
+command = "worktrunk.remove"
+description = "Worktree: remove"
+
+[ui]
+sidebar_width = 32
+sidebar_min_width = 18
+sidebar_max_width = 36
+right_click_passthrough_modifier = "ctrl"
+mouse_scroll_lines = 3
+# Keep Herdr's named, visually separated split panes.
+pane_gaps = true
+pane_outer_borders = true
+show_agent_labels_on_pane_borders = false
+agent_panel_sort = "priority"
+confirm_close = true
+prompt_new_workspace_name = true
+status_indicators = "symbols"
+
+[ui.toast]
+delivery = "herdr"
+delay_seconds = 1
+
+[ui.toast.herdr]
+position = "top-right"
+
+[ui.toast.clipboard]
+enabled = true
+position = "bottom-center"
+
+[ui.sound]
+# Keep sound notifications disabled.
+enabled = false
+
+[session]
+# Resume supported coding agents when restoring sessions.
+resume_agents_on_restore = true
+
+[remote]
+manage_ssh_config = true
+
+[experimental]
+# Persist recent pane output to disk; keep in mind it may include secrets.
+pane_history = true
+allow_nested = false
+kitty_graphics = true
+
+[advanced]
+# Scrollback limit is byte-based.
+scrollback_limit_bytes = 52428800

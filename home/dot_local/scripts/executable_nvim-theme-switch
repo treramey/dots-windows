@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ $# -ne 1 ]]; then
+  echo "Usage: $(basename "$0") <theme-slug>"
+  exit 1
+fi
+
+theme="$1"
+nvim_bin="${NVIM_BIN:-nvim}"
+resolver="${XDG_CONFIG_HOME:-$HOME/.config}/nvim/lua/treramey/theme_catalog_resolver.lua"
+
+if [[ ! -f "$resolver" ]]; then
+  echo "Neovim theme catalog resolver is unavailable" >&2
+  exit 1
+fi
+
+canonical_slug=$("$nvim_bin" --headless -u NONE -i NONE -l "$resolver" -- "$theme") || exit 1
+
+mkdir -p ~/.cache "${XDG_STATE_HOME:-$HOME/.local/state}/nvim/theme-switcher"
+printf '%s\n' "$canonical_slug" > ~/.cache/nvim-theme-trigger
+printf '%s\n' "$canonical_slug" > "${XDG_STATE_HOME:-$HOME/.local/state}/nvim/theme-switcher/theme"
+
+shopt -s nullglob
+if [[ -n ${XDG_RUNTIME_DIR-} && -d ${XDG_RUNTIME_DIR-} ]]; then
+  servers=("${XDG_RUNTIME_DIR}"/nvim.*)
+else
+  servers=(/run/user/*/nvim.*)
+fi
+shopt -u nullglob
+
+if ((${#servers[@]} == 0)); then
+  echo "No Neovim servers found; $theme will be applied on next start."
+  exit 0
+fi
+
+for server in "${servers[@]}"; do
+  "$nvim_bin" --server "$server" --remote-expr \
+    "luaeval('(function() local slug = vim.fn.readfile(vim.fn.expand(\"~/.cache/nvim-theme-trigger\"), \"\", 1)[1]; return require(\"treramey.theme_switcher\").apply_slug(slug, { persist = true, notify = false }) end)()')" \
+    >/dev/null 2>&1 || true
+done
+
+echo "Applied Neovim theme: $canonical_slug (${#servers[@]} instance(s))"

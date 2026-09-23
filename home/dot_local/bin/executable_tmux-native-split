@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Split the current tmux pane while preserving the current context:
+# - if the pane is running ssh, open the new split with the same ssh command
+# - otherwise, behave like normal tmux split-window in the current directory
+
+usage() {
+  printf 'Usage: tmux-native-split <-h|-v> [pane-id]\n' >&2
+}
+
+if [[ $# -lt 1 || $# -gt 2 ]]; then
+  usage
+  exit 2
+fi
+
+split_flag="$1"
+target_pane="${2:-${TMUX_PANE:-}}"
+
+case "$split_flag" in
+  -h|-v) ;;
+  h|horizontal) split_flag="-h" ;;
+  v|vertical) split_flag="-v" ;;
+  *)
+    usage
+    exit 2
+    ;;
+esac
+
+if [[ -z "$target_pane" ]]; then
+  exec tmux split-window "$split_flag"
+fi
+
+current_command="$(tmux display-message -p -t "$target_pane" '#{pane_current_command}')"
+current_path="$(tmux display-message -p -t "$target_pane" '#{pane_current_path}')"
+pane_tty="$(tmux display-message -p -t "$target_pane" '#{pane_tty}')"
+pane_pid="$(tmux display-message -p -t "$target_pane" '#{pane_pid}')"
+
+find_ssh_command() {
+  local tty_name="${pane_tty#/dev/}"
+  local line pid stat comm args candidate=""
+
+  # Prefer the foreground ssh process on the pane's tty. The '+' in ps stat marks
+  # the foreground process group, which is what tmux reports as pane_current_command.
+  while IFS= read -r line; do
+    line="${line#${line%%[![:space:]]*}}"
+    read -r pid stat comm args <<< "$line"
+
+    if [[ "$comm" == "ssh" && -n "${args:-}" ]]; then
+      if [[ "$stat" == *+* ]]; then
+        printf '%s\n' "$args"
+        return 0
+      fi
+
+      candidate="$args"
+    fi
+  done < <(ps -t "$tty_name" -o pid=,stat=,comm=,args= 2>/dev/null || true)
+
+  if [[ -n "$candidate" ]]; then
+    printf '%s\n' "$candidate"
+    return 0
+  fi
+
+  # Fallback for panes started directly as `exec ssh host`.
+  args="$(ps -o args= -p "$pane_pid" 2>/dev/null | sed 's/^[[:space:]]*//')"
+  if [[ "$args" == ssh || "$args" == ssh\ * ]]; then
+    printf '%s\n' "$args"
+    return 0
+  fi
+
+  return 1
+}
+
+if [[ "$current_command" == "ssh" ]]; then
+  if ssh_command="$(find_ssh_command)" && [[ -n "$ssh_command" ]]; then
+    exec tmux split-window "$split_flag" -t "$target_pane" "$ssh_command"
+  fi
+fi
+
+exec tmux split-window "$split_flag" -t "$target_pane" -c "$current_path"

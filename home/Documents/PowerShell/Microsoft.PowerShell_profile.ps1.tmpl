@@ -1,0 +1,282 @@
+{{- if eq .chezmoi.os "windows" }}
+# Managed by chezmoi.
+
+# Use the Azure CLI login instead of probing other Azure SDK credentials locally.
+$env:AZURE_TOKEN_CREDENTIALS = 'AzureCliCredential'
+
+# Expose native user commands such as agent-repos.ps1.
+$localBinPath = Join-Path $HOME '.local\bin'
+$pathEntries = $env:PATH -split [IO.Path]::PathSeparator
+if ((Test-Path -LiteralPath $localBinPath -PathType Container) -and $localBinPath -notin $pathEntries) {
+    $env:PATH = "$localBinPath$([IO.Path]::PathSeparator)$env:PATH"
+}
+
+# Native shell-init generators are relatively expensive. Cache their output
+# until the executable changes, then evaluate it in the profile's scope.
+function Get-CachedNativeShellInit {
+    param(
+        [Parameter(Mandatory)]
+        [string] $CommandName,
+
+        [Parameter(Mandatory)]
+        [string[]] $ArgumentList,
+
+        [Parameter(Mandatory)]
+        [string] $CacheName,
+
+        [scriptblock] $GeneratedInitFactory
+    )
+
+    $nativeCommand = Get-Command $CommandName -CommandType Application -ErrorAction SilentlyContinue |
+        Select-Object -First 1
+    if (-not $nativeCommand) {
+        return
+    }
+
+    $cacheDirectory = Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'PowerShell\ShellInitCache'
+    $cachePath = Join-Path $cacheDirectory "$CacheName.ps1"
+    $commandFile = Get-Item -LiteralPath $nativeCommand.Source
+    $cacheFile = if (Test-Path -LiteralPath $cachePath -PathType Leaf) {
+        Get-Item -LiteralPath $cachePath
+    }
+
+    if ($cacheFile -and $cacheFile.LastWriteTimeUtc -ge $commandFile.LastWriteTimeUtc) {
+        return [IO.File]::ReadAllText($cachePath)
+    }
+
+    $generatedInit = if ($GeneratedInitFactory) {
+        & $GeneratedInitFactory $nativeCommand.Source $ArgumentList | Out-String
+    } else {
+        & $nativeCommand.Source @ArgumentList | Out-String
+    }
+    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($generatedInit)) {
+        return
+    }
+
+    try {
+        $null = New-Item -ItemType Directory -Path $cacheDirectory -Force
+        $temporaryCachePath = "$cachePath.$PID.tmp"
+        [IO.File]::WriteAllText($temporaryCachePath, $generatedInit)
+        Move-Item -LiteralPath $temporaryCachePath -Destination $cachePath -Force
+    } catch {
+        Remove-Item -LiteralPath $temporaryCachePath -Force -ErrorAction SilentlyContinue
+    }
+
+    return $generatedInit
+}
+
+if (Get-Module -ListAvailable -Name PSReadLine) {
+    Import-Module PSReadLine
+    Set-PSReadLineOption -EditMode Windows
+    Set-PSReadLineOption -HistoryNoDuplicates
+
+    # Restore the history-backed predictions from the PowerShell profile gist.
+    # Keep InlineView because ListView's cursor-positioned menu can render
+    # incorrectly through terminal multiplexers, especially below a multi-line
+    # prompt.
+    Set-PSReadLineOption -PredictionSource History
+    Set-PSReadLineOption -PredictionViewStyle InlineView
+
+    # Search history with the arrow keys instead of cycling through unrelated
+    # commands. These bindings are useful with both history and predictions.
+    Set-PSReadLineKeyHandler -Key UpArrow -Function HistorySearchBackward
+    Set-PSReadLineKeyHandler -Key DownArrow -Function HistorySearchForward
+
+    # Move by PowerShell tokens with Alt+word, rather than by punctuation-
+    # delimited characters.
+    Set-PSReadLineKeyHandler -Key Alt+d -Function ShellKillWord
+    Set-PSReadLineKeyHandler -Key Alt+Backspace -Function ShellBackwardKillWord
+    Set-PSReadLineKeyHandler -Key Alt+b -Function ShellBackwardWord
+    Set-PSReadLineKeyHandler -Key Alt+f -Function ShellForwardWord
+    Set-PSReadLineKeyHandler -Key Alt+B -Function SelectShellBackwardWord
+    Set-PSReadLineKeyHandler -Key Alt+F -Function SelectShellForwardWord
+
+    # Accept one predicted word at a time with RightArrow when the cursor is
+    # at the end of the current input.
+    Set-PSReadLineKeyHandler -Key RightArrow `
+        -BriefDescription ForwardCharAndAcceptNextSuggestionWord `
+        -LongDescription 'Move right or accept the next predicted word' `
+        -ScriptBlock {
+            param($key, $arg)
+
+            $line = $null
+            $cursor = $null
+            [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$line, [ref]$cursor)
+
+            if ($cursor -lt $line.Length) {
+                [Microsoft.PowerShell.PSConsoleReadLine]::ForwardChar($key, $arg)
+            } else {
+                [Microsoft.PowerShell.PSConsoleReadLine]::AcceptNextSuggestionWord($key, $arg)
+            }
+        }
+
+    # Save an unfinished command without executing it; Alt+w makes it
+    # available to recall from history later.
+    Set-PSReadLineKeyHandler -Key Alt+w `
+        -BriefDescription SaveInHistory `
+        -LongDescription 'Save the current line in history without executing' `
+        -ScriptBlock {
+            param($key, $arg)
+
+            $line = $null
+            $cursor = $null
+            [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$line, [ref]$cursor)
+            [Microsoft.PowerShell.PSConsoleReadLine]::AddToHistory($line)
+            [Microsoft.PowerShell.PSConsoleReadLine]::RevertLine()
+        }
+
+    # Catch the common shorthand before Git sees it. Guard the argument access
+    # so pressing Enter on a bare `git` never produces a profile error.
+    Set-PSReadLineOption -CommandValidationHandler {
+        param([System.Management.Automation.Language.CommandAst]$CommandAst)
+
+        if ($CommandAst.GetCommandName() -eq 'git' -and $CommandAst.CommandElements.Count -gt 1) {
+            $gitCommand = $CommandAst.CommandElements[1].Extent
+            if ($gitCommand.Text -eq 'cmt') {
+                [Microsoft.PowerShell.PSConsoleReadLine]::Replace(
+                    $gitCommand.StartOffset,
+                    $gitCommand.EndOffset - $gitCommand.StartOffset,
+                    'commit')
+            }
+        }
+    }
+}
+
+# Terminal-Icons is cosmetic and expensive to import. Load it as soon as the
+# first prompt is idle instead of blocking the prompt from appearing.
+if (-not (Get-Module -Name Terminal-Icons)) {
+    Register-EngineEvent -SourceIdentifier PowerShell.OnIdle -MaxTriggerCount 1 -Action {
+        Import-Module Terminal-Icons -Global -ErrorAction SilentlyContinue
+    } | Out-Null
+}
+
+Set-Alias -Name g -Value git
+
+# Git SSH signing needs a live agent. WezTerm can leave a stale socket path in
+# the environment after its agent is restarted; prefer the Windows OpenSSH
+# agent named pipe when it is available.
+$windowsSshAgent = '\\.\pipe\openssh-ssh-agent'
+if (Test-Path -LiteralPath $windowsSshAgent) {
+    $env:SSH_AUTH_SOCK = $windowsSshAgent
+} elseif ($env:SSH_AUTH_SOCK -and -not (Test-Path -LiteralPath $env:SSH_AUTH_SOCK)) {
+    Remove-Item Env:SSH_AUTH_SOCK -ErrorAction SilentlyContinue
+}
+
+# Remove aliases left behind when reloading the former WSL/Neovide profile.
+if ((Get-Alias -Name nvim -ErrorAction SilentlyContinue).Definition -eq 'Open-WslNeovide') {
+    Remove-Item Alias:nvim -Force
+}
+Remove-Item Function:Open-WslNeovide -Force -ErrorAction SilentlyContinue
+
+Set-Alias -Name vim -Value nvim
+Set-Alias -Name v -Value nvim
+
+# mise shims resolve project tool versions without running hook-env during
+# every shell startup and prompt. Use full activation only if mise.toml files
+# begin defining environment variables or enter/leave hooks.
+$_miseShellInit = Get-CachedNativeShellInit -CommandName mise -ArgumentList activate, pwsh, --shims -CacheName mise-shims
+if ($_miseShellInit) {
+    Invoke-Expression $_miseShellInit
+}
+
+# Initialize Oh My Posh with the shared theme used by the other shells.
+$ohMyPoshConfig = Join-Path $HOME '.config\ohmyposh\theme.toml'
+if ((Get-Command oh-my-posh -CommandType Application -ErrorAction SilentlyContinue) -and
+    (Test-Path -LiteralPath $ohMyPoshConfig -PathType Leaf)) {
+    oh-my-posh init pwsh --config $ohMyPoshConfig | Invoke-Expression
+}
+
+# Initialize zoxide after Oh My Posh so its directory-tracking hook wraps the
+# final prompt function instead of being overwritten by it.
+$_zoxideShellInit = Get-CachedNativeShellInit -CommandName zoxide -ArgumentList init, powershell -CacheName zoxide
+if ($_zoxideShellInit) {
+    Remove-Variable -Name __zoxide_hooked -Scope Global -ErrorAction SilentlyContinue
+    Invoke-Expression $_zoxideShellInit
+}
+
+$worktrunkStaticInitFactory = {
+    param(
+        [string] $CommandPath,
+        [string[]] $ShellInitArguments
+    )
+
+    $dynamicShellInit = & $CommandPath @ShellInitArguments | Out-String
+    if ($LASTEXITCODE -ne 0) {
+        return
+    }
+
+    $tokens = $null
+    $parseErrors = $null
+    $shellInitAst = [Management.Automation.Language.Parser]::ParseInput(
+        $dynamicShellInit,
+        [ref] $tokens,
+        [ref] $parseErrors
+    )
+    $worktrunkFunctionAst = $shellInitAst.Find({
+        param($node)
+        $node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'wt'
+    }, $true)
+    if ($parseErrors.Count -gt 0 -or -not $worktrunkFunctionAst) {
+        return
+    }
+
+    $hadComplete = Test-Path Env:COMPLETE
+    $previousComplete = $env:COMPLETE
+    $hadCompletionName = Test-Path Env:WORKTRUNK_COMPLETE_NAME
+    $previousCompletionName = $env:WORKTRUNK_COMPLETE_NAME
+    try {
+        $env:COMPLETE = 'powershell'
+        $env:WORKTRUNK_COMPLETE_NAME = 'wt'
+        $completionInit = & $CommandPath | Out-String
+        if ($LASTEXITCODE -ne 0) {
+            return
+        }
+    } finally {
+        if ($hadComplete) {
+            $env:COMPLETE = $previousComplete
+        } else {
+            Remove-Item Env:COMPLETE -ErrorAction SilentlyContinue
+        }
+        if ($hadCompletionName) {
+            $env:WORKTRUNK_COMPLETE_NAME = $previousCompletionName
+        } else {
+            Remove-Item Env:WORKTRUNK_COMPLETE_NAME -ErrorAction SilentlyContinue
+        }
+    }
+
+    "$($worktrunkFunctionAst.Extent.Text)`r`n$completionInit"
+}
+$_wtShellInit = Get-CachedNativeShellInit `
+    -CommandName wt `
+    -ArgumentList config, shell, init, powershell `
+    -CacheName wt-static `
+    -GeneratedInitFactory $worktrunkStaticInitFactory
+if ($_wtShellInit) {
+    Invoke-Expression $_wtShellInit
+}
+
+Remove-Item Function:Get-CachedNativeShellInit
+Remove-Variable -Name _miseShellInit, _zoxideShellInit, _wtShellInit, ohMyPoshConfig, worktrunkStaticInitFactory -ErrorAction SilentlyContinue
+
+# Native completions from the Windows package manager and the .NET CLI.
+Register-ArgumentCompleter -Native -CommandName winget -ScriptBlock {
+    param($wordToComplete, $commandAst, $cursorPosition)
+
+    [Console]::InputEncoding = [Console]::OutputEncoding = $OutputEncoding = [System.Text.UTF8Encoding]::new()
+    $word = $wordToComplete.Replace('"', '""')
+    $ast = $commandAst.ToString().Replace('"', '""')
+    winget complete --word="$word" --commandline "$ast" --position $cursorPosition |
+        ForEach-Object {
+            [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterValue', $_)
+        }
+}
+
+Register-ArgumentCompleter -Native -CommandName dotnet -ScriptBlock {
+    param($commandName, $wordToComplete, $cursorPosition)
+
+    dotnet complete --position $cursorPosition "$wordToComplete" |
+        ForEach-Object {
+            [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterValue', $_)
+        }
+}
+{{- end }}

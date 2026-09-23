@@ -1,0 +1,60 @@
+{
+  "version": 3,
+  "lines": [
+    [
+      {
+        "id": "1",
+        "type": "context-length",
+        "color": "cyan",
+        "bold": true,
+        "rawValue": true
+      },
+      {
+        "id": "2",
+        "type": "custom-text",
+        "color": "brightBlack",
+        "customText": " / "
+      },
+      {
+        "id": "3",
+        "type": "context-window",
+        "color": "brightBlack",
+        "rawValue": true
+      },
+      {
+        "id": "4",
+        "type": "custom-text",
+        "color": "brightBlack",
+        "customText": " ("
+      },
+      {
+        "id": "5",
+        "type": "context-percentage",
+        "color": "yellow",
+        "bold": true,
+        "rawValue": true
+      },
+      {
+        "id": "6",
+        "type": "custom-text",
+        "color": "brightBlack",
+        "customText": ")"
+      }
+    ],
+    [],
+    []
+  ],
+  "flexMode": "full-minus-40",
+  "compactThreshold": 60,
+  "colorLevel": 2,
+  "inheritSeparatorColors": false,
+  "globalBold": false,
+  "powerline": {
+    "enabled": false,
+    "separators": [""],
+    "separatorInvertBackground": [false],
+    "startCaps": [],
+    "endCaps": [],
+    "autoAlign": false
+  }
+}

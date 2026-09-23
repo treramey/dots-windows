@@ -1,0 +1,7 @@
+# Apply the platform theme in this Fish process without persisting generated
+# color values into fish_variables.
+{{ if eq (includeTemplate "theme-mode" .) "dynamic" -}}
+fish_config theme choose System
+{{ else -}}
+fish_config theme choose 'Rosé Pine'
+{{ end -}}

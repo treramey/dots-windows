@@ -1,0 +1,227 @@
+# Naming catalogue — copy/paste starters
+
+A reference catalogue of three-part test names organised by category. Use these as templates when a fresh test needs a name. All examples use `Method_Scenario_ExpectedBehavior` form.
+
+______________________________________________________________________
+
+## 1. Arithmetic
+
+```csharp
+// Addition
+Add_WhenGiven1And2_ShouldReturn3
+Add_WhenGivenNegativeAndPositive_ShouldReturnCorrectResult
+Add_WhenGiven0And0_ShouldReturn0
+Add_WhenGivenVariousInputs_ShouldReturnCorrectResult
+
+// Division
+Divide_WhenGiven10And2_ShouldReturn5
+Divide_WhenDivisorIsZero_ShouldThrowDivideByZeroException
+Divide_WhenGivenVariousValidValues_ShouldReturnCorrectResult
+
+// Multiplication
+Multiply_WhenGiven3And4_ShouldReturn12
+Multiply_WhenGivenVariousInputs_ShouldReturnCorrectResult
+```
+
+______________________________________________________________________
+
+## 2. Validation
+
+### Email validation
+
+```csharp
+// Valid input
+IsValidEmail_WhenEmailIsValid_ShouldReturnTrue
+IsValidEmail_WhenEmailFormatIsValid_ShouldReturnTrue
+
+// Invalid input
+IsValidEmail_WhenInputIsNull_ShouldReturnFalse
+IsValidEmail_WhenInputIsEmpty_ShouldReturnFalse
+IsValidEmail_WhenInputIsWhitespaceOnly_ShouldReturnFalse
+IsValidEmail_WhenFormatIsInvalid_ShouldReturnFalse
+
+// Domain extraction
+GetDomain_WhenEmailIsValid_ShouldReturnDomainName
+GetDomain_WhenEmailIsInvalid_ShouldReturnNull
+GetDomain_WhenInputIsNull_ShouldReturnNull
+GetDomain_WhenGivenValidEmails_ShouldReturnCorrespondingDomain
+```
+
+### Password validation
+
+```csharp
+IsValidPassword_WhenPasswordMatchesRules_ShouldReturnTrue
+IsValidPassword_WhenLengthIsBelow8_ShouldReturnFalse
+IsValidPassword_WhenMissingUppercase_ShouldReturnFalse
+IsValidPassword_WhenMissingDigit_ShouldReturnFalse
+```
+
+______________________________________________________________________
+
+## 3. Business logic
+
+### Order processing
+
+```csharp
+// Process order
+ProcessOrder_WhenOrderIsValid_ShouldReturnProcessedOrder
+ProcessOrder_WhenInputIsNull_ShouldThrowArgumentNullException
+ProcessOrder_WhenCalledMultipleTimes_ShouldReturnNewInstanceEachTime
+
+// Order number
+GetOrderNumber_WhenOrderIsValid_ShouldReturnFormattedOrderNumber
+GetOrderNumber_WhenInputIsNull_ShouldThrowArgumentNullException
+GetOrderNumber_WhenGivenVariousPrefixAndNumber_ShouldReturnExpectedFormat
+```
+
+### Price calculation
+
+```csharp
+// Discount calculation
+Calculate_WhenPriceIs100AndDiscountIs10Percent_ShouldReturn90
+Calculate_WhenPriceIsNegative_ShouldThrowArgumentException
+Calculate_WhenDiscountIsOutOfRange_ShouldThrowArgumentException
+Calculate_WhenGivenValidCombinations_ShouldReturnExpected
+Calculate_WhenPriceIsZero_ShouldHandleGracefully
+
+// Tax calculation
+CalculateWithTax_WhenPriceIs100AndTaxIs5Percent_ShouldReturn105
+CalculateWithTax_WhenPriceIsNegative_ShouldThrowArgumentException
+CalculateWithTax_WhenTaxRateIsNegative_ShouldThrowArgumentException
+CalculateWithTax_WhenGivenValidCombinations_ShouldReturnExpected
+CalculateWithTax_WhenPriceIsZero_ShouldHandleGracefully
+```
+
+______________________________________________________________________
+
+## 4. State changes
+
+### Counter
+
+```csharp
+// Increment
+Increment_WhenStartingAtZero_ShouldReturn1
+Increment_WhenCalledTwiceFromZero_ShouldReturn2
+Increment_WhenCalledMultipleTimes_ShouldProduceConsistentResult
+
+// Decrement
+Decrement_WhenStartingAtZero_ShouldReturnMinus1
+Decrement_WhenStartingAtPositive_ShouldDecreaseCorrectly
+
+// Reset
+Reset_WhenCalledFromAnyValue_ShouldReturnToZero
+
+// Setter
+SetValue_WhenGivenArbitraryValue_ShouldStoreThatValue
+```
+
+______________________________________________________________________
+
+## 5. Collection operations
+
+```csharp
+// Add
+Add_WhenItemAdded_ShouldContainItem
+Add_WhenDuplicateItemAdded_ShouldThrowInvalidOperationException
+
+// Remove
+Remove_WhenItemExists_ShouldReturnTrue
+Remove_WhenItemDoesNotExist_ShouldReturnFalse
+
+// Find
+Find_WhenIdExists_ShouldReturnMatchingItem
+Find_WhenIdDoesNotExist_ShouldReturnNull
+FindAll_WhenPredicateMatches_ShouldReturnMatchingItems
+
+// Count
+Count_WhenCollectionIsEmpty_ShouldReturn0
+Count_WhenCollectionHas3Items_ShouldReturn3
+```
+
+______________________________________________________________________
+
+## 6. Async operations
+
+```csharp
+// Fetch
+GetAsync_WhenIdExists_ShouldReturnEntity
+GetAsync_WhenIdDoesNotExist_ShouldReturnNull
+GetAllAsync_WhenNoData_ShouldReturnEmptyCollection
+
+// Save
+SaveAsync_WhenEntityIsValid_ShouldPersistSuccessfully
+SaveAsync_WhenEntityIsNull_ShouldThrowArgumentNullException
+
+// Delete
+DeleteAsync_WhenIdExists_ShouldRemoveEntity
+DeleteAsync_WhenIdDoesNotExist_ShouldReturnFalse
+```
+
+______________________________________________________________________
+
+## 7. Exception-test naming
+
+Always name the exception type in the expected-behavior segment.
+
+```csharp
+// ArgumentNullException
+Method_WhenInputIsNull_ShouldThrowArgumentNullException
+
+// ArgumentException
+Method_WhenInputIsInvalid_ShouldThrowArgumentException
+Method_WhenInputIsNegative_ShouldThrowArgumentException
+
+// InvalidOperationException
+Method_WhenCalledInWrongState_ShouldThrowInvalidOperationException
+
+// Custom exception
+Method_WhenBusinessRuleViolated_ShouldThrowBusinessRuleException
+
+// With expected message
+Method_WhenInputIsInvalid_ShouldThrowExceptionWithExpectedMessage
+```
+
+______________________________________________________________________
+
+## 8. `[Theory]` naming
+
+```csharp
+// Multiple valid inputs
+Method_WhenGivenVariousValidValues_ShouldReturnExpected
+Method_WhenGivenVariousValidCombinations_ShouldHandleGracefully
+
+// Multiple invalid inputs
+Method_WhenGivenVariousInvalidValues_ShouldThrowException
+Method_WhenGivenVariousInvalidFormats_ShouldReturnFalse
+
+// Input-to-output correspondence
+Method_WhenGivenVariousAValues_ShouldReturnCorrespondingBValues
+GetDomain_WhenGivenValidEmails_ShouldReturnCorrespondingDomain
+```
+
+______________________________________________________________________
+
+## Templates — copy and replace `{ }`
+
+```csharp
+// Happy path
+{Method}_WhenGiven{ValidInput}_ShouldReturn{ExpectedResult}
+
+// Null input
+{Method}_WhenInputIsNull_ShouldThrowArgumentNullException
+
+// Empty / blank input
+{Method}_WhenInputIsEmpty_ShouldReturn{ExpectedResult}
+
+// Boundary
+{Method}_WhenInputIs{BoundaryValue}_Should{ExpectedBehavior}
+
+// Exception path
+{Method}_WhenGiven{InvalidInput}_ShouldThrow{ExceptionType}
+
+// State transition
+{Method}_WhenStartingAt{InitialState}_ShouldReach{ExpectedState}
+
+// Parameterised
+{Method}_WhenGivenVarious{InputType}_ShouldReturn{ExpectedPattern}
+```

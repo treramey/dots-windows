@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# Jump back to the previously focused Herdr tab — tmux's `prefix+l`, for tabs.
+#
+# Herdr has no last-used-tab action: keys.previous_tab is positional (the tab to
+# the left), and keys.last_pane only moves between panes *within* one tab, which
+# never fires in a one-pane-per-tab layout. So keep a one-slot history here.
+#
+# Bound in ~/.config/herdr/config.toml as a type="shell" command keybinding,
+# which runs without opening a pane or popup.
+#
+# Known limit: history advances only when this script runs. Bouncing A->B->A
+# with prefix+l is exact, but leaving a tab via prefix+n / prefix+1..9 does not
+# record it, so the next prefix+l returns to the last tab this script saw.
+
+set -uo pipefail
+
+# Spawned keybinding commands do not inherit an interactive shell's PATH.
+PATH="/opt/homebrew/bin:$HOME/.local/bin:$PATH"
+
+state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/herdr"
+state_file="$state_dir/last-tab"
+mkdir -p "$state_dir"
+
+# Always ask the server which tab is focused. HERDR_TAB_ID looks like a cheaper
+# answer but is the tab of the *invoking pane*, which is only the focused tab by
+# coincidence — a script run from another pane would record that pane's tab.
+current=$(herdr api snapshot 2>/dev/null |
+    jq -r '.result.snapshot.focused_tab_id // empty')
+
+# With no current tab there is nothing to return to and nothing worth recording.
+[[ -n $current ]] || exit 0
+
+previous=""
+[[ -f $state_file ]] && previous=$(<"$state_file")
+
+# Move only when the stored tab is a different tab that is still open. A closed
+# or stale entry falls through to the write below, which primes the next press.
+if [[ -n $previous && $previous != "$current" ]] &&
+    herdr tab get "$previous" >/dev/null 2>&1; then
+    herdr tab focus "$previous" >/dev/null 2>&1
+fi
+
+printf '%s' "$current" >"$state_file"

@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <!--
+    Coverlet coverage settings template.
+    Configures advanced code coverage options.
+
+    Usage:
+      dotnet test --settings coverage.runsettings
+  -->
+
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="XPlat code coverage">
+        <Configuration>
+
+          <!-- Output format -->
+          <!-- Supported: json, lcov, opencover, cobertura, teamcity -->
+          <Format>cobertura,opencover,lcov</Format>
+
+          <!--
+            Exclude specific assemblies or namespaces.
+            Uses glob patterns or regex.
+          -->
+          <Exclude>
+            <!-- Exclude test projects -->
+            [*.Tests]*
+            [*.Test]*
+
+            <!-- Exclude generated code -->
+            [*]*.Designer
+            [*]*.g.cs
+            [*]*.g.i.cs
+
+            <!-- Exclude specific namespaces -->
+            [*]*.Migrations.*
+            [*]Program
+            [*]Startup
+          </Exclude>
+
+          <!--
+            Explicitly include code under analysis.
+            If unset, all code is included.
+          -->
+          <Include>
+            <!-- Only include main projects -->
+            [MyProject.Core]*
+            [MyProject.Services]*
+          </Include>
+
+          <!-- Exclude specific files -->
+          <ExcludeByFile>
+            <!-- Exclude file paths with glob patterns -->
+            **/Migrations/**/*.cs
+            **/obj/**/*.cs
+            **/*.Designer.cs
+          </ExcludeByFile>
+
+          <!-- Exclude code marked with specific attributes -->
+          <ExcludeByAttribute>
+            Obsolete
+            GeneratedCode
+            ExcludeFromCodeCoverage
+            CompilerGenerated
+          </ExcludeByAttribute>
+
+          <!--
+            Coverage threshold.
+            Tests fail when coverage is below this value.
+          -->
+          <Threshold>60</Threshold>
+
+          <!--
+            Threshold type.
+            Options: line, branch, method
+          -->
+          <ThresholdType>line,branch</ThresholdType>
+
+          <!--
+            Threshold aggregation.
+            Options: total, individual
+              total      - overall project coverage
+              individual - every module must meet the threshold
+          -->
+          <ThresholdStat>total</ThresholdStat>
+
+          <!-- Use source link -->
+          <UseSourceLink>true</UseSourceLink>
+
+          <!-- Include test assembly -->
+          <IncludeTestAssembly>false</IncludeTestAssembly>
+
+          <!-- Single hit coverage setting -->
+          <SingleHit>false</SingleHit>
+
+          <!-- Collect coverage from this directory after build -->
+          <IncludeDirectory>../</IncludeDirectory>
+
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+
+  <!-- Test run settings -->
+  <RunConfiguration>
+    <!-- Test results directory -->
+    <ResultsDirectory>./TestResults</ResultsDirectory>
+
+    <!-- Target platform (x64, x86, ARM) -->
+    <TargetPlatform>x64</TargetPlatform>
+
+    <!-- Target framework -->
+    <TargetFrameworkVersion>net9.0</TargetFrameworkVersion>
+
+    <!-- Test session timeout (milliseconds) -->
+    <TestSessionTimeout>600000</TestSessionTimeout>
+
+    <!-- Collect source information -->
+    <CollectSourceInformation>true</CollectSourceInformation>
+  </RunConfiguration>
+
+</RunSettings>

@@ -1,0 +1,102 @@
+{
+  "packages": {
+    "windows": {
+      "scoopMain": [
+        "git",
+        "git-lfs",
+        "chezmoi",
+        "charm-gum",
+        "cmake",
+        "fd",
+        "fzf",
+        "gcc",
+        "lazygit",
+        "llvm",
+        "neovim",
+        "ninja",
+        "oh-my-posh",
+        "pwsh",
+        "ripgrep",
+        "tree-sitter",
+        "unzip",
+        "zoxide",
+        "vcredist2022"
+      ],
+      "scoopExtras": [
+        "neovide",
+        "npiperelay",
+        "windows-terminal",
+        "rancher-desktop"
+      ],
+      "winget": [
+        "Bitwarden.Bitwarden"
+      ],
+      "scoopFonts": [
+        "CascadiaCode-NF-Mono"
+      ]
+    },
+    "ubuntu": {
+      "apt": [
+        "build-essential",
+        "ca-certificates",
+        "curl",
+        "extrepo",
+        "fish",
+        "git",
+        "git-lfs",
+        "libicu78",
+        "mosh",
+        "pipx",
+        "socat",
+        "tmux",
+        "unzip",
+        "xdg-terminal-exec",
+        "zip"
+      ]
+    },
+    "mise": {
+      "common": [
+        { "name": "bun", "version": "1.4.0" },
+        { "name": "dotnet", "version": "9.0.306" },
+        { "name": "go", "version": "1.27.0" },
+        { "name": "gum", "version": "2.0.0" },
+        { "name": "node", "version": "24.13.1" },
+        { "name": "pnpm", "version": "11.25.0" },
+        { "name": "python", "version": "3.14.7" },
+        { "name": "rust", "version": "1.98.0" },
+        { "name": "shfmt", "version": "3.14.0" },
+        { "name": "stylua", "version": "2.5.2" },
+        { "name": "uv", "version": "0.12.7" },
+        { "name": "npm:@fsouza/prettierd", "version": "0.29.0" },
+        { "name": "npm:vscode-langservers-extracted", "version": "4.10.0" },
+        { "name": "npm:@earendil-works/pi-coding-agent", "version": "0.84.4" },
+        { "name": "pipx:xmlformatter", "version": "0.2.9" }
+      ],
+      "wsl": [
+        { "name": "ast-grep", "version": "0.45.3" },
+        { "name": "bat", "version": "0.26.1" },
+        { "name": "cloc", "version": "2.10" },
+        { "name": "cmake", "version": "4.4.3" },
+        { "name": "delta", "version": "0.19.2" },
+        { "name": "direnv", "version": "2.37.1" },
+        { "name": "eza", "version": "0.23.5" },
+        { "name": "fd", "version": "10.5.0" },
+        { "name": "fzf", "version": "0.74.3" },
+        { "name": "gh", "version": "2.98.0" },
+        { "name": "go:github.com/joshmedeski/sesh/v2", "version": "2.28.0" },
+        { "name": "herdr", "version": "0.8.2" },
+        { "name": "jq", "version": "1.8.2" },
+        { "name": "just", "version": "1.58.0" },
+        { "name": "lazygit", "version": "0.64.1" },
+        { "name": "neovim", "version": "0.12.5" },
+        { "name": "ripgrep", "version": "15.2.0" },
+        { "name": "shellcheck", "version": "0.11.0" },
+        { "name": "starship", "version": "1.26.0" },
+        { "name": "television", "version": "0.15.9" },
+        { "name": "tree-sitter", "version": "0.27.0" },
+        { "name": "zellij", "version": "0.45.1" },
+        { "name": "zoxide", "version": "0.10.0" }
+      ]
+    }
+  }
+}
