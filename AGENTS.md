@@ -54,10 +54,13 @@ edits happen directly in the repo directory.
 The Windows-only adaptations (MinGW CC fix for tree-sitter, Program Files
 dotnet, pwsh terminals, Neovide guifont and transparency guards) live as
 **uncommitted working-tree changes inside the submodule** until they are
-upstreamed to treramey/nvim. Do not commit inside the submodule or reset it
-without coordinating with that repo. `run_before_00-init-nvim-submodule`
-scripts (`.ps1` on Windows, `.sh` on Linux) initialize the submodule on every
-apply, so a fresh clone heals itself.
+upstreamed to treramey/nvim, along with a monokai-pro source correction: the
+upstream lock pins a rev that only exists in `loctvl842/monokai-pro.nvim`,
+while its src says `gthelding`, so the plugin silently reinstalls on every
+startup. Do not commit inside the submodule or reset it without coordinating
+with that repo. `run_before_00-init-nvim-submodule` scripts (`.ps1` on
+Windows, `.sh` on Linux) initialize the submodule on every apply, so a fresh
+clone heals itself.
 
 ## Pi and agent skills
 
